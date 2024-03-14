@@ -45,4 +45,4 @@ This project is licensed under the [MIT License](LICENSE).
 
 ## Contact
 
-If you have any questions or feedback regarding O'Keeffe Craft API, please feel free to contact us at [email@example.com](mailto:email@example.com).
+If you have any questions or feedback regarding O'Keeffe Craft API, please feel free to contact us at [Kevin O'Keeffe](mailto:kevokeeffe@gmail.com).
