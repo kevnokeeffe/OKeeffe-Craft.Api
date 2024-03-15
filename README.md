@@ -41,7 +41,7 @@ We welcome contributions from the community to enhance O'Keeffe Craft API. If yo
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [MIT License](LICENSE.txt).
 
 ## Contact
 
