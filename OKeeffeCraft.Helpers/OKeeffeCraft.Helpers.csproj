@@ -15,6 +15,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\OKeeffeCraft.Database\OKeeffeCraft.Database.csproj" />
 	  <ProjectReference Include="..\OKeeffeCraft.Entities\OKeeffeCraft.Entities.csproj" />
 	  <ProjectReference Include="..\OKeeffeCraft.Models\OKeeffeCraft.Models.csproj" />
 	</ItemGroup>

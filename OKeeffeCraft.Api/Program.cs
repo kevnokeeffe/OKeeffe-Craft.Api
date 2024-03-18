@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using OKeeffeCraft.Authorization;
 using OKeeffeCraft.Core.Interfaces;
 using OKeeffeCraft.Core.Services;
@@ -36,8 +37,9 @@ var app = builder.Build();
 // migrate any database changes on startup (includes initial db creation)
 using (var scope = app.Services.CreateScope())
 {
-    var dataContext = scope.ServiceProvider.GetRequiredService<DataContext>();
-    dataContext.Database.Migrate();
+    MigrationHelper.RunMigrations<DataContext>(scope.ServiceProvider);
+    //var dataContext = scope.ServiceProvider.GetRequiredService<DataContext>();
+    //dataContext.Database.Migrate();
 }
 
 // configure HTTP request pipeline
