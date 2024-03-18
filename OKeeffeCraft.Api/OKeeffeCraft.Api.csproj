@@ -8,7 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.3" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OKeeffeCraft.Authorization\OKeeffeCraft.Authorization.csproj" />
+    <ProjectReference Include="..\OKeeffeCraft.Core\OKeeffeCraft.Core.csproj" />
   </ItemGroup>
 
 </Project>
