@@ -42,8 +42,11 @@ namespace OKeeffeCraft.Core.Services
             var account = _context.Accounts.SingleOrDefault(x => x.Email == model.Email);
 
             // validate
-            if (account == null || !account.IsVerified || !BC.Verify(model.Password, account.PasswordHash))
+            if (account == null || !BC.Verify(model.Password, account.PasswordHash))
                 throw new AppException("Email or password is incorrect");
+
+            if (!account.IsVerified)
+                throw new AppException("Account email not confirmed");
 
             // authentication successful so generate jwt and refresh tokens
             var jwtToken = _jwtUtils.GenerateJwtToken(account);
@@ -51,7 +54,7 @@ namespace OKeeffeCraft.Core.Services
             account.RefreshTokens.Add(refreshToken);
 
             // remove old refresh tokens from account
-            removeOldRefreshTokens(account);
+            RemoveOldRefreshTokens(account);
 
             // save changes to db
             _context.Update(account);
@@ -65,13 +68,13 @@ namespace OKeeffeCraft.Core.Services
 
         public AuthenticateResponse RefreshToken(string token, string ipAddress)
         {
-            var account = getAccountByRefreshToken(token);
+            var account = GetAccountByRefreshToken(token);
             var refreshToken = account.RefreshTokens.Single(x => x.Token == token);
 
             if (refreshToken.IsRevoked)
             {
                 // revoke all descendant tokens in case this token has been compromised
-                revokeDescendantRefreshTokens(refreshToken, account, ipAddress, $"Attempted reuse of revoked ancestor token: {token}");
+                RevokeDescendantRefreshTokens(refreshToken, account, ipAddress, $"Attempted reuse of revoked ancestor token: {token}");
                 _context.Update(account);
                 _context.SaveChanges();
             }
@@ -80,12 +83,12 @@ namespace OKeeffeCraft.Core.Services
                 throw new AppException("Invalid token");
 
             // replace old refresh token with a new one (rotate token)
-            var newRefreshToken = rotateRefreshToken(refreshToken, ipAddress);
+            var newRefreshToken = RotateRefreshToken(refreshToken, ipAddress);
             account.RefreshTokens.Add(newRefreshToken);
 
 
             // remove old refresh tokens from account
-            removeOldRefreshTokens(account);
+            RemoveOldRefreshTokens(account);
 
             // save changes to db
             _context.Update(account);
@@ -103,14 +106,14 @@ namespace OKeeffeCraft.Core.Services
 
         public void RevokeToken(string token, string ipAddress)
         {
-            var account = getAccountByRefreshToken(token);
+            var account = GetAccountByRefreshToken(token);
             var refreshToken = account.RefreshTokens.Single(x => x.Token == token);
 
             if (!refreshToken.IsActive)
                 throw new AppException("Invalid token");
 
             // revoke token and save
-            revokeRefreshToken(refreshToken, ipAddress, "Revoked without replacement");
+            RevokeRefreshToken(refreshToken, ipAddress, "Revoked without replacement");
             _context.Update(account);
             _context.SaveChanges();
         }
@@ -121,7 +124,7 @@ namespace OKeeffeCraft.Core.Services
             if (_context.Accounts.Any(x => x.Email == model.Email))
             {
                 // send already registered error in email to prevent account enumeration
-                sendAlreadyRegisteredEmail(model.Email, origin);
+                SendAlreadyRegisteredEmail(model.Email, origin);
                 return;
             }
 
@@ -132,7 +135,7 @@ namespace OKeeffeCraft.Core.Services
             var isFirstAccount = _context.Accounts.Count() == 0;
             account.Role = isFirstAccount ? Role.Admin : Role.User;
             account.Created = DateTime.UtcNow;
-            account.VerificationToken = generateVerificationToken();
+            account.VerificationToken = GenerateVerificationToken();
 
             // hash password
             account.PasswordHash = BC.HashPassword(model.Password);
@@ -142,7 +145,7 @@ namespace OKeeffeCraft.Core.Services
             _context.SaveChanges();
 
             // send email
-            sendVerificationEmail(account, origin);
+            SendVerificationEmail(account, origin);
         }
 
         public void VerifyEmail(string token)
@@ -167,24 +170,24 @@ namespace OKeeffeCraft.Core.Services
             if (account == null) return;
 
             // create reset token that expires after 1 day
-            account.ResetToken = generateResetToken();
+            account.ResetToken = GenerateResetToken();
             account.ResetTokenExpires = DateTime.UtcNow.AddDays(1);
 
             _context.Accounts.Update(account);
             _context.SaveChanges();
 
             // send email
-            sendPasswordResetEmail(account, origin);
+            SendPasswordResetEmail(account, origin);
         }
 
         public void ValidateResetToken(ValidateResetTokenRequest model)
         {
-            getAccountByResetToken(model.Token);
+            GetAccountByResetToken(model.Token);
         }
 
         public void ResetPassword(ResetPasswordRequest model)
         {
-            var account = getAccountByResetToken(model.Token);
+            var account = GetAccountByResetToken(model.Token);
 
             // update password and remove reset token
             account.PasswordHash = BC.HashPassword(model.Password);
@@ -204,7 +207,7 @@ namespace OKeeffeCraft.Core.Services
 
         public AccountResponse GetById(int id)
         {
-            var account = getAccount(id);
+            var account = GetAccount(id);
             return _mapper.Map<AccountResponse>(account);
         }
 
@@ -231,7 +234,7 @@ namespace OKeeffeCraft.Core.Services
 
         public AccountResponse Update(int id, UpdateRequest model)
         {
-            var account = getAccount(id);
+            var account = GetAccount(id);
 
             // validate
             if (account.Email != model.Email && _context.Accounts.Any(x => x.Email == model.Email))
@@ -252,28 +255,28 @@ namespace OKeeffeCraft.Core.Services
 
         public void Delete(int id)
         {
-            var account = getAccount(id);
+            var account = GetAccount(id);
             _context.Accounts.Remove(account);
             _context.SaveChanges();
         }
 
         // helper methods
 
-        private Account getAccount(int id)
+        private Account GetAccount(int id)
         {
             var account = _context.Accounts.Find(id);
             if (account == null) throw new KeyNotFoundException("Account not found");
             return account;
         }
 
-        private Account getAccountByRefreshToken(string token)
+        private Account GetAccountByRefreshToken(string token)
         {
             var account = _context.Accounts.SingleOrDefault(u => u.RefreshTokens.Any(t => t.Token == token));
             if (account == null) throw new AppException("Invalid token");
             return account;
         }
 
-        private Account getAccountByResetToken(string token)
+        private Account GetAccountByResetToken(string token)
         {
             var account = _context.Accounts.SingleOrDefault(x =>
                 x.ResetToken == token && x.ResetTokenExpires > DateTime.UtcNow);
@@ -281,7 +284,7 @@ namespace OKeeffeCraft.Core.Services
             return account;
         }
 
-        private string generateJwtToken(Account account)
+        private string GenerateJwtToken(Account account)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
@@ -295,7 +298,7 @@ namespace OKeeffeCraft.Core.Services
             return tokenHandler.WriteToken(token);
         }
 
-        private string generateResetToken()
+        private string GenerateResetToken()
         {
             // token is a cryptographically strong random sequence of values
             var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(64));
@@ -303,12 +306,12 @@ namespace OKeeffeCraft.Core.Services
             // ensure token is unique by checking against db
             var tokenIsUnique = !_context.Accounts.Any(x => x.ResetToken == token);
             if (!tokenIsUnique)
-                return generateResetToken();
+                return GenerateResetToken();
 
             return token;
         }
 
-        private string generateVerificationToken()
+        private string GenerateVerificationToken()
         {
             // token is a cryptographically strong random sequence of values
             var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(64));
@@ -316,39 +319,39 @@ namespace OKeeffeCraft.Core.Services
             // ensure token is unique by checking against db
             var tokenIsUnique = !_context.Accounts.Any(x => x.VerificationToken == token);
             if (!tokenIsUnique)
-                return generateVerificationToken();
+                return GenerateVerificationToken();
 
             return token;
         }
 
-        private RefreshToken rotateRefreshToken(RefreshToken refreshToken, string ipAddress)
+        private RefreshToken RotateRefreshToken(RefreshToken refreshToken, string ipAddress)
         {
             var newRefreshToken = _jwtUtils.GenerateRefreshToken(ipAddress);
-            revokeRefreshToken(refreshToken, ipAddress, "Replaced by new token", newRefreshToken.Token);
+            RevokeRefreshToken(refreshToken, ipAddress, "Replaced by new token", newRefreshToken.Token);
             return newRefreshToken;
         }
 
-        private void removeOldRefreshTokens(Account account)
+        private void RemoveOldRefreshTokens(Account account)
         {
             account.RefreshTokens.RemoveAll(x =>
                 !x.IsActive &&
                 x.Created.AddDays(_appSettings.RefreshTokenTTL) <= DateTime.UtcNow);
         }
 
-        private void revokeDescendantRefreshTokens(RefreshToken refreshToken, Account account, string ipAddress, string reason)
+        private static void RevokeDescendantRefreshTokens(RefreshToken refreshToken, Account account, string ipAddress, string reason)
         {
             // recursively traverse the refresh token chain and ensure all descendants are revoked
             if (!string.IsNullOrEmpty(refreshToken.ReplacedByToken))
             {
                 var childToken = account.RefreshTokens.SingleOrDefault(x => x.Token == refreshToken.ReplacedByToken);
-                if (childToken.IsActive)
-                    revokeRefreshToken(childToken, ipAddress, reason);
-                else
-                    revokeDescendantRefreshTokens(childToken, account, ipAddress, reason);
+                if (childToken != null && childToken.IsActive)
+                    RevokeRefreshToken(childToken, ipAddress, reason);
+                else if (childToken != null && !childToken.IsActive)
+                    RevokeDescendantRefreshTokens(childToken, account, ipAddress, reason);
             }
         }
 
-        private void revokeRefreshToken(RefreshToken token, string ipAddress, string reason = null, string replacedByToken = null)
+        private static void RevokeRefreshToken(RefreshToken token, string? ipAddress, string? reason = null, string? replacedByToken = null)
         {
             token.Revoked = DateTime.UtcNow;
             token.RevokedByIp = ipAddress;
@@ -356,7 +359,7 @@ namespace OKeeffeCraft.Core.Services
             token.ReplacedByToken = replacedByToken;
         }
 
-        private void sendVerificationEmail(Account account, string origin)
+        private void SendVerificationEmail(Account account, string origin)
         {
             string message;
             if (!string.IsNullOrEmpty(origin))
@@ -384,7 +387,7 @@ namespace OKeeffeCraft.Core.Services
             );
         }
 
-        private void sendAlreadyRegisteredEmail(string email, string origin)
+        private void SendAlreadyRegisteredEmail(string email, string origin)
         {
             string message;
             if (!string.IsNullOrEmpty(origin))
@@ -401,7 +404,7 @@ namespace OKeeffeCraft.Core.Services
             );
         }
 
-        private void sendPasswordResetEmail(Account account, string origin)
+        private void SendPasswordResetEmail(Account account, string origin)
         {
             string message;
             if (!string.IsNullOrEmpty(origin))

@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using OKeeffeCraft.Authorization;
 using OKeeffeCraft.Core.Interfaces;
 using OKeeffeCraft.Core.Services;
