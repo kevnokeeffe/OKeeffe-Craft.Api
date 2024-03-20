@@ -2,7 +2,7 @@ name: Build and deploy .NET application to container app okeeffecraftapi-app-202
 on:
   push:
     branches:
-    - master
+    - main
 env:
   CONTAINER_APP_CONTAINER_NAME: okeeffecraftapi
   CONTAINER_APP_NAME: okeeffecraftapi-app-202403191948
