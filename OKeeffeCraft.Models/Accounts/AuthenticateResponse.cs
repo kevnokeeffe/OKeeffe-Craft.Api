@@ -13,9 +13,9 @@ namespace OKeeffeCraft.Models.Accounts
         public DateTime Created { get; set; }
         public DateTime? Updated { get; set; }
         public bool IsVerified { get; set; }
-        public required string JwtToken { get; set; }
+        public string? JwtToken { get; set; }
 
         [JsonIgnore] // refresh token is returned in http only cookie
-        public required string RefreshToken { get; set; }
+        public string? RefreshToken { get; set; }
     }
 }

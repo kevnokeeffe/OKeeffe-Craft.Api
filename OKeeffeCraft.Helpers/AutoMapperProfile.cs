@@ -13,6 +13,10 @@ namespace OKeeffeCraft.Helpers
 
             CreateMap<Account, AuthenticateResponse>();
 
+            CreateMap<Account, AccountModel>();
+
+            CreateMap<AccountModel, Account>();
+
             CreateMap<RegisterRequest, Account>();
 
             CreateMap<CreateRequest, Account>();

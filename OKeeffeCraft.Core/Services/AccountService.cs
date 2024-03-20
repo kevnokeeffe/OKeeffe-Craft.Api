@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using OKeeffeCraft.Authorization;
@@ -6,6 +7,7 @@ using OKeeffeCraft.Core.Interfaces;
 using OKeeffeCraft.Database;
 using OKeeffeCraft.Entities;
 using OKeeffeCraft.Helpers;
+using OKeeffeCraft.Models;
 using OKeeffeCraft.Models.Accounts;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -37,9 +39,9 @@ namespace OKeeffeCraft.Core.Services
             _emailService = emailService;
         }
 
-        public AuthenticateResponse Authenticate(AuthenticateRequest model, string ipAddress)
+        public async Task<ServiceResponse<AuthenticateResponse>> Authenticate(AuthenticateRequest model, string ipAddress)
         {
-            var account = _context.Accounts.SingleOrDefault(x => x.Email == model.Email);
+            var account = await _context.Accounts.FirstOrDefaultAsync(x => x.Email == model.Email);
 
             // validate
             if (account == null || !BC.Verify(model.Password, account.PasswordHash))
@@ -58,17 +60,23 @@ namespace OKeeffeCraft.Core.Services
 
             // save changes to db
             _context.Update(account);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             var response = _mapper.Map<AuthenticateResponse>(account);
             response.JwtToken = jwtToken;
             response.RefreshToken = refreshToken.Token;
-            return response;
+
+            return new ServiceResponse<AuthenticateResponse> { Success = true, Message = "User Authenticated Successfully.", Data = response };
         }
 
-        public AuthenticateResponse RefreshToken(string token, string ipAddress)
+        public async Task<ServiceResponse<AuthenticateResponse>> RefreshToken(string? token, string? ipAddress)
         {
-            var account = GetAccountByRefreshToken(token);
+            if (string.IsNullOrEmpty(token))
+                throw new AppException("Token is required");
+            if (string.IsNullOrEmpty(ipAddress))
+                throw new AppException("IP Address is required");
+
+            var account = await GetAccountByRefreshToken(token);
             var refreshToken = account.RefreshTokens.Single(x => x.Token == token);
 
             if (refreshToken.IsRevoked)
@@ -76,7 +84,7 @@ namespace OKeeffeCraft.Core.Services
                 // revoke all descendant tokens in case this token has been compromised
                 RevokeDescendantRefreshTokens(refreshToken, account, ipAddress, $"Attempted reuse of revoked ancestor token: {token}");
                 _context.Update(account);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
             }
 
             if (!refreshToken.IsActive)
@@ -92,7 +100,7 @@ namespace OKeeffeCraft.Core.Services
 
             // save changes to db
             _context.Update(account);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             // generate new jwt
             var jwtToken = _jwtUtils.GenerateJwtToken(account);
@@ -101,12 +109,12 @@ namespace OKeeffeCraft.Core.Services
             var response = _mapper.Map<AuthenticateResponse>(account);
             response.JwtToken = jwtToken;
             response.RefreshToken = newRefreshToken.Token;
-            return response;
+            return new ServiceResponse<AuthenticateResponse> { Success = true, Message = "Token Refreshed.", Data = response };
         }
 
-        public void RevokeToken(string token, string ipAddress)
+        public async Task<ServiceResponse<string>> RevokeToken(string token, string ipAddress)
         {
-            var account = GetAccountByRefreshToken(token);
+            var account = await GetAccountByRefreshToken(token);
             var refreshToken = account.RefreshTokens.Single(x => x.Token == token);
 
             if (!refreshToken.IsActive)
@@ -115,79 +123,86 @@ namespace OKeeffeCraft.Core.Services
             // revoke token and save
             RevokeRefreshToken(refreshToken, ipAddress, "Revoked without replacement");
             _context.Update(account);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
+
+            return new ServiceResponse<string> { Data = null, Message = "Refresh token revoked.", Success = true };
         }
 
-        public void Register(RegisterRequest model, string origin)
+        public async Task<ServiceResponse<AccountModel>> Register(RegisterRequest model, string origin)
         {
             // validate
-            if (_context.Accounts.Any(x => x.Email == model.Email))
+            if (await _context.Accounts.AnyAsync(x => x.Email == model.Email))
             {
                 // send already registered error in email to prevent account enumeration
                 SendAlreadyRegisteredEmail(model.Email, origin);
-                return;
+                return new ServiceResponse<AccountModel> { Data = null, Message = "Email address already registered.", Success = false };
             }
 
             // map model to new account object
             var account = _mapper.Map<Account>(model);
 
             // first registered account is an admin
-            var isFirstAccount = _context.Accounts.Count() == 0;
+            var isFirstAccount = !await _context.Accounts.AnyAsync();
             account.Role = isFirstAccount ? Role.Admin : Role.User;
             account.Created = DateTime.UtcNow;
-            account.VerificationToken = GenerateVerificationToken();
+            account.VerificationToken = await GenerateVerificationToken();
 
             // hash password
             account.PasswordHash = BC.HashPassword(model.Password);
 
             // save account
             _context.Accounts.Add(account);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             // send email
             SendVerificationEmail(account, origin);
+            return new ServiceResponse<AccountModel> { Data = _mapper.Map<AccountModel>(account), Message = "Registration successful, please check your email for verification instructions.", Success = true };
         }
 
-        public void VerifyEmail(string token)
+        public async Task<ServiceResponse<string>> VerifyEmail(string token)
         {
-            var account = _context.Accounts.SingleOrDefault(x => x.VerificationToken == token);
+            var account = await _context.Accounts.SingleOrDefaultAsync(x => x.VerificationToken == token) ?? throw new AppException("Verification failed");
 
-            if (account == null)
-                throw new AppException("Verification failed");
+            if (account.IsVerified)
+                return new ServiceResponse<string> { Data = null, Message = "Email already verified", Success = false };
 
             account.Verified = DateTime.UtcNow;
             account.VerificationToken = null;
 
             _context.Accounts.Update(account);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
+
+            return new ServiceResponse<string> { Data = null, Message = "Verification successful, you can now login", Success = true };
         }
 
-        public void ForgotPassword(ForgotPasswordRequest model, string origin)
+        public async Task<ServiceResponse<string>> ForgotPassword(ForgotPasswordRequest model, string origin)
         {
-            var account = _context.Accounts.SingleOrDefault(x => x.Email == model.Email);
+            var account = await _context.Accounts.SingleOrDefaultAsync(x => x.Email == model.Email);
 
             // always return ok response to prevent email enumeration
-            if (account == null) return;
+            if (account == null) return new ServiceResponse<string> { Data = null, Message = "No account associated with that email", Success = false };
 
             // create reset token that expires after 1 day
-            account.ResetToken = GenerateResetToken();
+            account.ResetToken = await GenerateResetToken();
             account.ResetTokenExpires = DateTime.UtcNow.AddDays(1);
 
             _context.Accounts.Update(account);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             // send email
             SendPasswordResetEmail(account, origin);
+            return new ServiceResponse<string> { Data = null, Message = "Please check your email for password reset instructions", Success = true };
         }
 
-        public void ValidateResetToken(ValidateResetTokenRequest model)
+        public async Task<ServiceResponse<AccountModel>> ValidateResetToken(ValidateResetTokenRequest model)
         {
-            GetAccountByResetToken(model.Token);
+            var response = await GetAccountByResetToken(model.Token);
+            return new ServiceResponse<AccountModel> { Data = _mapper.Map<AccountModel>(response), Message = "Token is valid", Success = true };
         }
 
-        public void ResetPassword(ResetPasswordRequest model)
+        public async Task<ServiceResponse<AccountModel>> ResetPassword(ResetPasswordRequest model)
         {
-            var account = GetAccountByResetToken(model.Token);
+            var account = await GetAccountByResetToken(model.Token);
 
             // update password and remove reset token
             account.PasswordHash = BC.HashPassword(model.Password);
@@ -196,25 +211,26 @@ namespace OKeeffeCraft.Core.Services
             account.ResetTokenExpires = null;
 
             _context.Accounts.Update(account);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
+            return new ServiceResponse<AccountModel> { Data = _mapper.Map<AccountModel>(account), Message = "Password reset successful, you can now login", Success = true };
         }
 
-        public IEnumerable<AccountResponse> GetAll()
+        public async Task<ServiceResponse<IEnumerable<AccountResponse>>> GetAll()
         {
-            var accounts = _context.Accounts;
-            return _mapper.Map<IList<AccountResponse>>(accounts);
+            var accounts = await _context.Accounts.ToListAsync();
+            return new ServiceResponse<IEnumerable<AccountResponse>> { Data = _mapper.Map<IList<AccountResponse>>(accounts), Message = "Accounts retrieved successfully", Success = true };
         }
 
-        public AccountResponse GetById(int id)
+        public async Task<ServiceResponse<AccountResponse>> GetById(int id)
         {
-            var account = GetAccount(id);
-            return _mapper.Map<AccountResponse>(account);
+            var account = await GetAccount(id);
+            return new ServiceResponse<AccountResponse> { Data = _mapper.Map<AccountResponse>(account), Message = "Account retrieved successfully", Success = true };
         }
 
-        public AccountResponse Create(CreateRequest model)
+        public async Task<ServiceResponse<AccountResponse>> Create(CreateRequest model)
         {
             // validate
-            if (_context.Accounts.Any(x => x.Email == model.Email))
+            if (await _context.Accounts.AnyAsync(x => x.Email == model.Email))
                 throw new AppException($"Email '{model.Email}' is already registered");
 
             // map model to new account object
@@ -227,17 +243,17 @@ namespace OKeeffeCraft.Core.Services
 
             // save account
             _context.Accounts.Add(account);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
-            return _mapper.Map<AccountResponse>(account);
+            return new ServiceResponse<AccountResponse> { Success = true, Message = "Account created successfully.", Data = _mapper.Map<AccountResponse>(account) };
         }
 
-        public AccountResponse Update(int id, UpdateRequest model)
+        public async Task<ServiceResponse<AccountResponse>> Update(int id, UpdateRequest model)
         {
-            var account = GetAccount(id);
+            var account = await GetAccount(id);
 
             // validate
-            if (account.Email != model.Email && _context.Accounts.Any(x => x.Email == model.Email))
+            if (account.Email != model.Email && await _context.Accounts.AnyAsync(x => x.Email == model.Email))
                 throw new AppException($"Email '{model.Email}' is already registered");
 
             // hash password if it was entered
@@ -248,78 +264,62 @@ namespace OKeeffeCraft.Core.Services
             _mapper.Map(model, account);
             account.Updated = DateTime.UtcNow;
             _context.Accounts.Update(account);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
-            return _mapper.Map<AccountResponse>(account);
+            return new ServiceResponse<AccountResponse> { Success = true, Message = "Account updated successfully.", Data = _mapper.Map<AccountResponse>(account) };
         }
 
-        public void Delete(int id)
+        public async Task<ServiceResponse<string>> Delete(int id)
         {
-            var account = GetAccount(id);
+            var account = await GetAccount(id);
             _context.Accounts.Remove(account);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
+            return new ServiceResponse<string> { Success = true, Message = "Account deleted successfully." };
         }
 
         // helper methods
 
-        private Account GetAccount(int id)
+        private async Task<Account> GetAccount(int id)
         {
-            var account = _context.Accounts.Find(id);
-            if (account == null) throw new KeyNotFoundException("Account not found");
-            return account;
+            var account = await _context.Accounts.FindAsync(id);
+            return account ?? throw new KeyNotFoundException("Account not found");
         }
 
-        private Account GetAccountByRefreshToken(string token)
+        private async Task<Account> GetAccountByRefreshToken(string token)
         {
-            var account = _context.Accounts.SingleOrDefault(u => u.RefreshTokens.Any(t => t.Token == token));
-            if (account == null) throw new AppException("Invalid token");
-            return account;
+            var account = await _context.Accounts.SingleOrDefaultAsync(u => u.RefreshTokens.Any(t => t.Token == token));
+            return account ?? throw new AppException("Invalid token");
         }
 
-        private Account GetAccountByResetToken(string token)
+        private async Task<Account> GetAccountByResetToken(string token)
         {
-            var account = _context.Accounts.SingleOrDefault(x =>
+            var account = await _context.Accounts.SingleOrDefaultAsync(x =>
                 x.ResetToken == token && x.ResetTokenExpires > DateTime.UtcNow);
-            if (account == null) throw new AppException("Invalid token");
-            return account;
+            return account ?? throw new AppException("Invalid token");
         }
 
-        private string GenerateJwtToken(Account account)
-        {
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(new[] { new Claim("id", account.Id.ToString()) }),
-                Expires = DateTime.UtcNow.AddMinutes(15),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-            };
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            return tokenHandler.WriteToken(token);
-        }
-
-        private string GenerateResetToken()
+        private async Task<string> GenerateResetToken()
         {
             // token is a cryptographically strong random sequence of values
             var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(64));
 
             // ensure token is unique by checking against db
-            var tokenIsUnique = !_context.Accounts.Any(x => x.ResetToken == token);
+            var tokenIsUnique = !await _context.Accounts.AnyAsync(x => x.ResetToken == token);
             if (!tokenIsUnique)
-                return GenerateResetToken();
+                return await GenerateResetToken();
 
             return token;
         }
 
-        private string GenerateVerificationToken()
+        private async Task<string> GenerateVerificationToken()
         {
             // token is a cryptographically strong random sequence of values
             var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(64));
 
             // ensure token is unique by checking against db
-            var tokenIsUnique = !_context.Accounts.Any(x => x.VerificationToken == token);
+            var tokenIsUnique = !await _context.Accounts.AnyAsync(x => x.VerificationToken == token);
             if (!tokenIsUnique)
-                return GenerateVerificationToken();
+                return await GenerateVerificationToken();
 
             return token;
         }

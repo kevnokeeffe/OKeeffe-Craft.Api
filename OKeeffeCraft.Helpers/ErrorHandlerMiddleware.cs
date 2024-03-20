@@ -2,6 +2,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using OKeeffeCraft.Models;
 
 namespace OKeeffeCraft.Helpers
 {
@@ -44,7 +45,7 @@ namespace OKeeffeCraft.Helpers
                         break;
                 }
 
-                var result = JsonSerializer.Serialize(new { message = error?.Message });
+                var result = JsonSerializer.Serialize(new ServiceResponse<string> { Message = error?.Message, Success = false, Data = null });
                 await response.WriteAsync(result);
             }
         }
