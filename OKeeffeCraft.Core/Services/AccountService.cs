@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using OKeeffeCraft.Authorization;
 using OKeeffeCraft.Core.Interfaces;
 using OKeeffeCraft.Database;
@@ -9,10 +8,7 @@ using OKeeffeCraft.Entities;
 using OKeeffeCraft.Helpers;
 using OKeeffeCraft.Models;
 using OKeeffeCraft.Models.Accounts;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Text;
 using BC = BCrypt.Net.BCrypt;
 
 namespace OKeeffeCraft.Core.Services
@@ -77,7 +73,7 @@ namespace OKeeffeCraft.Core.Services
                 throw new AppException("IP Address is required");
 
             var account = await GetAccountByRefreshToken(token);
-            var refreshToken = account.RefreshTokens.Single(x => x.Token == token);
+            var refreshToken = account.RefreshTokens.Single(x => x.Token == token) ?? throw new AppException("Invalid token");
 
             if (refreshToken.IsRevoked)
             {

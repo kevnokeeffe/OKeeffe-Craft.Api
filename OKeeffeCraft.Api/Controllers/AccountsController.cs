@@ -4,7 +4,6 @@ using OKeeffeCraft.Core.Interfaces;
 using OKeeffeCraft.Entities;
 using OKeeffeCraft.Models;
 using OKeeffeCraft.Models.Accounts;
-using Org.BouncyCastle.Cms;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace OKeeffeCraft.Api.Controllers
@@ -73,7 +72,7 @@ namespace OKeeffeCraft.Api.Controllers
         [SwaggerResponse(400, "Error message (generally a validation error)", typeof(ServiceResponse<string>))]
         public async Task<IActionResult> Register(RegisterRequest model)
         {
-            string? origin = Request.Headers.Origin;
+            string? origin = Request.Headers["Host"];
 
             if (string.IsNullOrEmpty(origin))
                 return BadRequest(new ServiceResponse<string> { Data = null,  Message = "Origin header is required", Success = false});
@@ -100,7 +99,7 @@ namespace OKeeffeCraft.Api.Controllers
         [SwaggerResponse(400, "Error message (generally a validation error)", typeof(ServiceResponse<string>))]
         public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest model)
         {
-            string? origin = Request.Headers.Origin;
+            string? origin = Request.Headers["Host"];
 
             if (string.IsNullOrEmpty(origin))
                 return BadRequest(new ServiceResponse<string> { Data = null, Message = "Origin header is required", Success = false });

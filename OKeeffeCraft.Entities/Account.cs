@@ -2,8 +2,6 @@
 {
     public class Account
     {
-        private static readonly List<RefreshToken> refreshTokens = new List<RefreshToken>();
-
         public int Id { get; set; }
         public required string Title { get; set; }
         public required string FirstName { get; set; }
@@ -20,7 +18,7 @@
         public DateTime? PasswordReset { get; set; }
         public DateTime? Created { get; set; }
         public DateTime? Updated { get; set; }
-        public List<RefreshToken> RefreshTokens { get; set; } = refreshTokens;
+        public List<RefreshToken>? RefreshTokens { get; set; }
 
         public bool OwnsToken(string token)
         {

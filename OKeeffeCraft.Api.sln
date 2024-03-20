@@ -5,17 +5,19 @@ VisualStudioVersion = 17.8.34525.116
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OKeeffeCraft.Api", "OKeeffeCraft.Api\OKeeffeCraft.Api.csproj", "{C609695B-5AA6-4D37-AA1C-51094C8F73E2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OKeeffeCraft.Core", "OKeeffeCraft.Core\OKeeffeCraft.Core.csproj", "{C3B35880-3D18-4C46-AA61-9DA0DA734831}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OKeeffeCraft.Core", "OKeeffeCraft.Core\OKeeffeCraft.Core.csproj", "{C3B35880-3D18-4C46-AA61-9DA0DA734831}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OKeeffeCraft.Entities", "OKeeffeCraft.Entities\OKeeffeCraft.Entities.csproj", "{18DE2156-03A6-449D-AFCA-99E7598D9D65}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OKeeffeCraft.Entities", "OKeeffeCraft.Entities\OKeeffeCraft.Entities.csproj", "{18DE2156-03A6-449D-AFCA-99E7598D9D65}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OKeeffeCraft.Database", "OKeeffeCraft.Database\OKeeffeCraft.Database.csproj", "{F28F99B3-41A6-436D-8DE9-88731117760B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OKeeffeCraft.Database", "OKeeffeCraft.Database\OKeeffeCraft.Database.csproj", "{F28F99B3-41A6-436D-8DE9-88731117760B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OKeeffeCraft.Models", "OKeeffeCraft.Models\OKeeffeCraft.Models.csproj", "{429A7BAF-8BB3-432D-86C3-04202123494E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OKeeffeCraft.Models", "OKeeffeCraft.Models\OKeeffeCraft.Models.csproj", "{429A7BAF-8BB3-432D-86C3-04202123494E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OKeeffeCraft.Helpers", "OKeeffeCraft.Helpers\OKeeffeCraft.Helpers.csproj", "{F73DED1D-DD35-483A-9DAD-84D87896B1AD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OKeeffeCraft.Helpers", "OKeeffeCraft.Helpers\OKeeffeCraft.Helpers.csproj", "{F73DED1D-DD35-483A-9DAD-84D87896B1AD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OKeeffeCraft.Authorization", "OKeeffeCraft.Authorization\OKeeffeCraft.Authorization.csproj", "{7BCAFFD2-0215-488A-88C0-8F06DF872ABB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OKeeffeCraft.Authorization", "OKeeffeCraft.Authorization\OKeeffeCraft.Authorization.csproj", "{7BCAFFD2-0215-488A-88C0-8F06DF872ABB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OKeeffeCraft.ExternalServiceProviders", "OKeeffeCraft.ExternalServiceProviders\OKeeffeCraft.ExternalServiceProviders.csproj", "{91399792-72B0-4839-B491-8D3DBD6E387A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,6 +53,10 @@ Global
 		{7BCAFFD2-0215-488A-88C0-8F06DF872ABB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7BCAFFD2-0215-488A-88C0-8F06DF872ABB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7BCAFFD2-0215-488A-88C0-8F06DF872ABB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{91399792-72B0-4839-B491-8D3DBD6E387A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{91399792-72B0-4839-B491-8D3DBD6E387A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{91399792-72B0-4839-B491-8D3DBD6E387A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{91399792-72B0-4839-B491-8D3DBD6E387A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
