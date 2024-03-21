@@ -14,6 +14,5 @@
         public required string SmtpUser { get; set; }
         public required string SmtpPass { get; set; }
         public required MailSettings MailSettings { get; set; }
-        public required string SendGridKey { get; set; }
     }
 }
