@@ -7,6 +7,8 @@ namespace OKeeffeCraft.Database
     public class DataContext : DbContext
     {
         public DbSet<Account> Accounts { get; set; }
+        public DbSet<ActivityLog> ActivityLogs { get; set; }
+        public DbSet<ErrorLog> ErrorLogs { get; set; }
 
         private readonly IConfiguration Configuration;
 

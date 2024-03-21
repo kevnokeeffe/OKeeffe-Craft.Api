@@ -1,4 +1,6 @@
 using OKeeffeCraft.Authorization;
+using OKeeffeCraft.Authorization.Interfaces;
+using OKeeffeCraft.Authorization.Services;
 using OKeeffeCraft.Core.Interfaces;
 using OKeeffeCraft.Core.Services;
 using OKeeffeCraft.Database;
@@ -23,11 +25,14 @@ services.AddSwaggerGen();
 
 // configure strongly typed settings object
 services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
+services.AddHttpContextAccessor();
 
 // configure DI for application services
 services.AddScoped<IJwtUtils, JwtUtils>();
 services.AddScoped<IAccountService, AccountService>();
 services.AddScoped<IEmailService, EmailService>();
+services.AddScoped<ILogService, LogService>();
+services.AddTransient<IAuthIdentityService, AuthIdentityService>();
 
 
 var app = builder.Build();

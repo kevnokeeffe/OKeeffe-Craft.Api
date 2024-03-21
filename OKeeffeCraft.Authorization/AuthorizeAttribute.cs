@@ -15,21 +15,26 @@ namespace OKeeffeCraft.Authorization
             _roles = roles ?? new Role[] { };
         }
 
+        /// <summary>
+        /// Handles authorization for API endpoints.
+        /// </summary>
+        /// <param name="context">The AuthorizationFilterContext containing the context for authorization.</param>
         public void OnAuthorization(AuthorizationFilterContext context)
         {
-            // skip authorization if action is decorated with [AllowAnonymous] attribute
+            // Skip authorization if action is decorated with [AllowAnonymous] attribute
             var allowAnonymous = context.ActionDescriptor.EndpointMetadata.OfType<AllowAnonymousAttribute>().Any();
             if (allowAnonymous)
                 return;
 
-            // authorization
+            // Authorization
             Account? account = context.HttpContext.Items["Account"] as Account;
 
             if (account == null || (_roles.Any() && !_roles.Contains(account.Role)))
             {
-                // not logged in or role not authorized
+                // Not logged in or role not authorized
                 context.Result = new JsonResult(new { message = "Unauthorized" }) { StatusCode = StatusCodes.Status401Unauthorized };
             }
         }
+
     }
 }
