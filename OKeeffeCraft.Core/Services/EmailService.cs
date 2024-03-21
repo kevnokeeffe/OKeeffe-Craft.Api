@@ -61,7 +61,7 @@ namespace OKeeffeCraft.Core.Services
             }
             catch (Exception error)
             {
-                await _logService.ErrorLog(error.Message, error.StackTrace, _authIdentityService.GetAccountId());
+                await _logService.ErrorLog(error.Message, error.StackTrace, "Account id", account.Id.ToString());
             }
         }
 
@@ -90,7 +90,7 @@ namespace OKeeffeCraft.Core.Services
             }
             catch (Exception error)
             {
-                await _logService.ErrorLog(error.Message, error.StackTrace, _authIdentityService.GetAccountId());
+                await _logService.ErrorLog(error.Message, error.StackTrace,"Email" ,email);
             }
         }
 
@@ -125,7 +125,7 @@ namespace OKeeffeCraft.Core.Services
             }
             catch (Exception error)
             {
-                await _logService.ErrorLog(error.Message, error.StackTrace, _authIdentityService.GetAccountId());
+                await _logService.ErrorLog(error.Message, error.StackTrace, "Account id", account.Id.ToString());
             }
         }
 
@@ -156,7 +156,7 @@ namespace OKeeffeCraft.Core.Services
             }
             catch (Exception error)
             {
-                await _logService.ErrorLog(error.Message, error.StackTrace, _authIdentityService.GetAccountId());
+                await _logService.ErrorLog(error.Message, error.StackTrace, "Account id", _authIdentityService.GetAccountId());
             }
         }
     }
