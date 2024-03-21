@@ -36,8 +36,6 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     MigrationHelper.RunMigrations<DataContext>(scope.ServiceProvider);
-    //var dataContext = scope.ServiceProvider.GetRequiredService<DataContext>();
-    //dataContext.Database.Migrate();
 }
 
 // configure HTTP request pipeline
@@ -61,6 +59,5 @@ using (var scope = app.Services.CreateScope())
 
     app.MapControllers();
 }
-
 
 app.Run();

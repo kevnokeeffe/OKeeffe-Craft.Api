@@ -196,8 +196,8 @@ namespace OKeeffeCraft.Api.Controllers
                 return Unauthorized(new { message = "Unauthorized" });
 
             // only admins can update role
-            if (Account.Role != Role.Admin)
-                model.Role = null;
+            /*if (Account.Role != Role.Admin)
+                model.Role = null;*/
 
             var account = await _accountService.Update(id, model);
             return Ok(account);

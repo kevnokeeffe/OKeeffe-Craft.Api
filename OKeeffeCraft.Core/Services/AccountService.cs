@@ -69,11 +69,12 @@ namespace OKeeffeCraft.Core.Services
         {
             if (string.IsNullOrEmpty(token))
                 throw new AppException("Token is required");
+
             if (string.IsNullOrEmpty(ipAddress))
                 throw new AppException("IP Address is required");
 
             var account = await GetAccountByRefreshToken(token);
-            var refreshToken = account.RefreshTokens.Single(x => x.Token == token) ?? throw new AppException("Invalid token");
+            var refreshToken = account?.RefreshTokens?.Single(x => x.Token == token) ?? throw new AppException("Invalid token");
 
             if (refreshToken.IsRevoked)
             {
@@ -111,7 +112,11 @@ namespace OKeeffeCraft.Core.Services
         public async Task<ServiceResponse<string>> RevokeToken(string token, string ipAddress)
         {
             var account = await GetAccountByRefreshToken(token);
+
             var refreshToken = account.RefreshTokens.Single(x => x.Token == token);
+
+            if (refreshToken == null || refreshToken.IsRevoked)
+                throw new AppException("Token not found");
 
             if (!refreshToken.IsActive)
                 throw new AppException("Invalid token");
@@ -329,17 +334,17 @@ namespace OKeeffeCraft.Core.Services
 
         private void RemoveOldRefreshTokens(Account account)
         {
-            account.RefreshTokens.RemoveAll(x =>
+            account?.RefreshTokens?.RemoveAll(x =>
                 !x.IsActive &&
                 x.Created.AddDays(_appSettings.RefreshTokenTTL) <= DateTime.UtcNow);
         }
 
-        private static void RevokeDescendantRefreshTokens(RefreshToken refreshToken, Account account, string ipAddress, string reason)
+        private static void RevokeDescendantRefreshTokens(RefreshToken refreshToken, Account? account, string ipAddress, string reason)
         {
             // recursively traverse the refresh token chain and ensure all descendants are revoked
             if (!string.IsNullOrEmpty(refreshToken.ReplacedByToken))
             {
-                var childToken = account.RefreshTokens.SingleOrDefault(x => x.Token == refreshToken.ReplacedByToken);
+                var childToken = account?.RefreshTokens?.SingleOrDefault(x => x.Token == refreshToken.ReplacedByToken);
                 if (childToken != null && childToken.IsActive)
                     RevokeRefreshToken(childToken, ipAddress, reason);
                 else if (childToken != null && !childToken.IsActive)

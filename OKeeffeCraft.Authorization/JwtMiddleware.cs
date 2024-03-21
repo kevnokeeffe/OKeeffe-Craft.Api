@@ -18,14 +18,20 @@ namespace OKeeffeCraft.Authorization
 
         public async Task Invoke(HttpContext context, DataContext dataContext, IJwtUtils jwtUtils)
         {
-            var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
-            var accountId = jwtUtils.ValidateJwtToken(token);
-            if (accountId != null)
+            // Check if Authorization header is present and not null
+            if (context.Request.Headers.ContainsKey("Authorization"))
             {
-                // attach account to context on successful jwt validation
-                context.Items["Account"] = await dataContext.Accounts.FindAsync(accountId.Value);
+                var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+                if (token != null)
+                {
+                    var accountId = jwtUtils.ValidateJwtToken(token);
+                    if (accountId != null)
+                    {
+                        // attach account to context on successful jwt validation
+                        context.Items["Account"] = await dataContext.Accounts.FindAsync(accountId.Value);
+                    }
+                }
             }
-
             await _next(context);
         }
     }
