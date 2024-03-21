@@ -17,7 +17,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OKeeffeCraft.Helpers", "OKe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OKeeffeCraft.Authorization", "OKeeffeCraft.Authorization\OKeeffeCraft.Authorization.csproj", "{7BCAFFD2-0215-488A-88C0-8F06DF872ABB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OKeeffeCraft.ExternalServiceProviders", "OKeeffeCraft.ExternalServiceProviders\OKeeffeCraft.ExternalServiceProviders.csproj", "{91399792-72B0-4839-B491-8D3DBD6E387A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OKeeffeCraft.ExternalServiceProviders", "OKeeffeCraft.ExternalServiceProviders\OKeeffeCraft.ExternalServiceProviders.csproj", "{91399792-72B0-4839-B491-8D3DBD6E387A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OKeeffeCraft.Tests", "OKeeffeCraft.Tests\OKeeffeCraft.Tests.csproj", "{E7E0E033-5B4B-4AF5-8BDC-2872F796EFCE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -57,6 +59,10 @@ Global
 		{91399792-72B0-4839-B491-8D3DBD6E387A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{91399792-72B0-4839-B491-8D3DBD6E387A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{91399792-72B0-4839-B491-8D3DBD6E387A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E7E0E033-5B4B-4AF5-8BDC-2872F796EFCE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E7E0E033-5B4B-4AF5-8BDC-2872F796EFCE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E7E0E033-5B4B-4AF5-8BDC-2872F796EFCE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E7E0E033-5B4B-4AF5-8BDC-2872F796EFCE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

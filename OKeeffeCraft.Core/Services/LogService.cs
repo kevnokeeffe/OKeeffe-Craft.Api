@@ -1,7 +1,6 @@
 ﻿using OKeeffeCraft.Core.Interfaces;
 using OKeeffeCraft.Database;
 using OKeeffeCraft.Entities;
-using Org.BouncyCastle.Tls;
 
 namespace OKeeffeCraft.Core.Services
 {
@@ -18,11 +17,12 @@ namespace OKeeffeCraft.Core.Services
         /// Logs an activity message for a specified account asynchronously.
         /// </summary>
         /// <param name="message">The activity message to log.</param>
-        /// <param name="accountId">The ID of the account associated with the activity.</param>
-        public async Task ActivityLog(string message, string? identifierType, string? identifier)
+        /// <param name="identifierType">The type of identifier associated with the activity.</param>
+        /// <param name="identifier">The value associated with the identifier type.</param>
+        public async Task ActivityLog(string message, string? identifierType = null, string? identifier = null)
         {
             // Add the activity log to the database asynchronously
-            await _context.ActivityLogs.AddAsync(new ActivityLog { LogDate = DateTime.UtcNow, LogDetails = message,IdentifierType = identifier, Identifier = identifier });
+            await _context.ActivityLogs.AddAsync(new ActivityLog { LogDate = DateTime.UtcNow, LogDetails = message, IdentifierType = identifierType, Identifier = identifier });
             await _context.SaveChangesAsync();
         }
 
@@ -31,11 +31,12 @@ namespace OKeeffeCraft.Core.Services
         /// </summary>
         /// <param name="message">The error message to log.</param>
         /// <param name="stackTrace">The stack trace associated with the error.</param>
-        /// <param name="accountId">The ID of the account associated with the error.</param>
-        public async Task ErrorLog(string message, string? stackTrace, string? identifierType, string? identifier)
+        /// <param name="identifierType">The type of identifier associated with the error.</param>
+        /// <param name="identifier">The value associated with the identifier type.</param>
+        public async Task ErrorLog(string message, string? stackTrace = null, string? identifierType = null, string? identifier = null)
         {
             // Add the error log to the database asynchronously
-            await _context.ErrorLogs.AddAsync(new ErrorLog { LogDate = DateTime.UtcNow, LogDetails = message, StackTrace = stackTrace, IdentifierType = identifier, Identifier = identifier });
+            await _context.ErrorLogs.AddAsync(new ErrorLog { LogDate = DateTime.UtcNow, LogDetails = message, StackTrace = stackTrace, IdentifierType = identifierType, Identifier = identifier });
             await _context.SaveChangesAsync();
         }
 
