@@ -234,8 +234,8 @@ namespace OKeeffeCraft.Api.Controllers
 
         private string IpAddress()
         {
-            if (Request.Headers.ContainsKey("X-Forwarded-For"))
-                return Request.Headers["X-Forwarded-For"]!;
+            if (Request.Headers.TryGetValue("X-Forwarded-For", out Microsoft.Extensions.Primitives.StringValues value))
+                return value!;
             else
                 return HttpContext.Connection.RemoteIpAddress!.MapToIPv4().ToString();
         }

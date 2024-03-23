@@ -7,18 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
-    <PackageReference Include="MailKit" Version="4.4.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.3" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\OKeeffeCraft.Authorization\OKeeffeCraft.Authorization.csproj" />
     <ProjectReference Include="..\OKeeffeCraft.Database\OKeeffeCraft.Database.csproj" />
     <ProjectReference Include="..\OKeeffeCraft.Entities\OKeeffeCraft.Entities.csproj" />
-    <ProjectReference Include="..\OKeeffeCraft.ExternalServiceProviders\OKeeffeCraft.ExternalServiceProviders.csproj" />
     <ProjectReference Include="..\OKeeffeCraft.Helpers\OKeeffeCraft.Helpers.csproj" />
-    <ProjectReference Include="..\OKeeffeCraft.Logging\OKeeffeCraft.Logging.csproj" />
     <ProjectReference Include="..\OKeeffeCraft.Models\OKeeffeCraft.Models.csproj" />
   </ItemGroup>
 

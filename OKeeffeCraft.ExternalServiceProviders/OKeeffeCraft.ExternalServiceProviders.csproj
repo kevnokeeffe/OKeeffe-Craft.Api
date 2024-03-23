@@ -4,11 +4,17 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <UserSecretsId>7af45344-172b-41f8-b80a-2d92506c2f3a</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Interfaces\" />
-    <Folder Include="Services\" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="6.0.1" />
+    <PackageReference Include="OpenAI-DotNet" Version="7.7.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OKeeffeCraft.Logging\OKeeffeCraft.Logging.csproj" />
+    <ProjectReference Include="..\OKeeffeCraft.Models\OKeeffeCraft.Models.csproj" />
   </ItemGroup>
 
 </Project>
