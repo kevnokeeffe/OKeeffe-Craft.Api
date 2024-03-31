@@ -4,8 +4,8 @@ namespace OKeeffeCraft.Core.Interfaces
 {
     public interface IEmailService 
     {
-        void SendVerificationEmail(Account account, string origin);
-        void SendAlreadyRegisteredEmail(string email, string origin);
-        void SendPasswordResetEmail(Account account, string origin);
+        void SendVerificationEmail(Account account);
+        void SendAlreadyRegisteredEmail(string email);
+        void SendPasswordResetEmail(Account account);
     }
 }

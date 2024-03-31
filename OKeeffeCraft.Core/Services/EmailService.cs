@@ -29,26 +29,17 @@ namespace OKeeffeCraft.Core.Services
         /// </summary>
         /// <param name="account">The account for which the verification email is being sent.</param>
         /// <param name="origin">The origin URL for the verification link (optional).</param>
-        public async void SendVerificationEmail(Account account, string origin)
+        public async void SendVerificationEmail(Account account)
         {
             try
             {
                 string message;
-                if (!string.IsNullOrEmpty(origin))
-                {
+
                     // Origin exists if the request is sent from a browser single page app (e.g., Angular or React)
                     // So send a link to verify via the single page app
-                    var verifyUrl = $"{origin}/account/verify-email?token={account.VerificationToken}";
+                    var verifyUrl = $"{_appSettings.ClientUrl}/verify-email?token={account.VerificationToken}";
                     message = $@"<p>Please click the below link to verify your email address:</p>
                     <p><a href=""{verifyUrl}"">{verifyUrl}</a></p>";
-                }
-                else
-                {
-                    // Origin is missing if the request is sent directly to the API (e.g., from Postman)
-                    // So send instructions to verify directly with the API
-                    message = $@"<p>Please use the below token to verify your email address with the <code>/accounts/verify-email</code> api route:</p>
-                    <p><code>{account.VerificationToken}</code></p>";
-                }
 
                 Send(
                     to: account.Email,
@@ -70,15 +61,14 @@ namespace OKeeffeCraft.Core.Services
         /// </summary>
         /// <param name="email">The email address that is already registered.</param>
         /// <param name="origin">The origin URL for additional actions (optional).</param>
-        public async void SendAlreadyRegisteredEmail(string email, string origin)
+        public async void SendAlreadyRegisteredEmail(string email)
         {
             try
             {
                 string message;
-                if (!string.IsNullOrEmpty(origin))
-                    message = $@"<p>If you don't know your password please visit the <a href=""{origin}/account/forgot-password"">forgot password</a> page.</p>";
-                else
-                    message = "<p>If you don't know your password you can reset it via the <code>/accounts/forgot-password</code> api route.</p>";
+
+                    message = $@"<p>If you don't know your password please visit the <a href=""{_appSettings.ClientUrl}/account/forgot-password"">forgot password</a> page.</p>";
+               
 
                 Send(
                     to: email,
@@ -99,22 +89,17 @@ namespace OKeeffeCraft.Core.Services
         /// </summary>
         /// <param name="account">The account for which the password reset email is being sent.</param>
         /// <param name="origin">The origin URL for the password reset link (optional).</param>
-        public async void SendPasswordResetEmail(Account account, string origin)
+        public async void SendPasswordResetEmail(Account account)
         {
             try
             {
                 string message;
-                if (!string.IsNullOrEmpty(origin))
-                {
-                    var resetUrl = $"{origin}/account/reset-password?token={account.ResetToken}";
+
+                    var resetUrl = $"{_appSettings.ClientUrl}/reset-password?token={account.ResetToken}";
                     message = $@"<p>Please click the below link to reset your password, the link will be valid for 1 day:</p>
                     <p><a href=""{resetUrl}"">{resetUrl}</a></p>";
-                }
-                else
-                {
-                    message = $@"<p>Please use the below token to reset your password with the <code>/accounts/reset-password</code> api route:</p>
-                    <p><code>{account.ResetToken}</code></p>";
-                }
+                
+              
 
                 Send(
                     to: account.Email,

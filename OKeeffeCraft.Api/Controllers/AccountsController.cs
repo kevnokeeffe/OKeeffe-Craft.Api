@@ -25,10 +25,9 @@ namespace OKeeffeCraft.Api.Controllers
         [SwaggerOperation(Summary = "Authenticates a new user account on the system")]
         [SwaggerResponse(200, "User authenticated.", typeof(ServiceResponse<AuthenticateResponse>))]
         [SwaggerResponse(400, "Error message (generally a validation error)", typeof(ServiceResponse<string>))]
-        public async Task<IActionResult> Authenticate(AuthenticateRequest model)
+        public async Task<IActionResult> Authenticate([FromBody] AuthenticateRequest model)
         {
             var response = await _accountService.Authenticate(model, IpAddress());
-            SetTokenCookie(response.Data?.RefreshToken);
             return Ok(response);
         }
 
@@ -37,11 +36,9 @@ namespace OKeeffeCraft.Api.Controllers
         [SwaggerOperation(Summary = "Use a refresh token to get a new JWT token")]
         [SwaggerResponse(200, "Access token aquired.", typeof(ServiceResponse<AuthenticateResponse>))]
         [SwaggerResponse(400, "Error message (generally a validation error)", typeof(ServiceResponse<string>))]
-        public async Task<IActionResult> RefreshToken()
+        public async Task<IActionResult> RefreshToken(RefreshTokenRequestModel model)
         {
-            var refreshToken = Request.Cookies["refreshToken"];
-            var response = await _accountService.RefreshToken(refreshToken, IpAddress());
-            SetTokenCookie(response.Data?.RefreshToken);
+            var response =  await _accountService.RefreshToken(model.Token, IpAddress());
             return Ok(response);
         }
 
@@ -51,8 +48,8 @@ namespace OKeeffeCraft.Api.Controllers
         [SwaggerResponse(400, "Error message (generally a validation error)", typeof(ServiceResponse<string>))]
         public async Task<IActionResult> RevokeToken(RevokeTokenRequest model)
         {
-            // accept token from request body or cookie
-            var token = model.Token ?? Request.Cookies["refreshToken"];
+            // accept token from request body
+            var token = model.Token;
 
             if (string.IsNullOrEmpty(token))
                 return BadRequest(new { message = "Token is required" });
@@ -68,16 +65,11 @@ namespace OKeeffeCraft.Api.Controllers
         [AllowAnonymous]
         [HttpPost("register")]
         [SwaggerOperation(Summary = "Registers a new user account on the system.")]
-        [SwaggerResponse(200, "User and associated account created. User must confirm email before being able to log in.", typeof(ServiceResponse<AccountModel>))]
+        [SwaggerResponse(200, "User and associated account created. User must confirm email before being able to log in.", typeof(ServiceResponse<AccountResponse>))]
         [SwaggerResponse(400, "Error message (generally a validation error)", typeof(ServiceResponse<string>))]
         public async Task<IActionResult> Register(RegisterRequest model)
         {
-            string? origin = Request.Headers["Host"];
-
-            if (string.IsNullOrEmpty(origin))
-                return BadRequest(new ServiceResponse<string> { Data = null,  Message = "Origin header is required", Success = false});
-
-            var response = await _accountService.Register(model, origin);
+            var response = await _accountService.Register(model);
             return Ok(response);
         }
 
@@ -99,12 +91,7 @@ namespace OKeeffeCraft.Api.Controllers
         [SwaggerResponse(400, "Error message (generally a validation error)", typeof(ServiceResponse<string>))]
         public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest model)
         {
-            string? origin = Request.Headers["Host"];
-
-            if (string.IsNullOrEmpty(origin))
-                return BadRequest(new ServiceResponse<string> { Data = null, Message = "Origin header is required", Success = false });
-
-            var response = await _accountService.ForgotPassword(model, origin);
+            var response = await _accountService.ForgotPassword(model);
             return Ok(response);
         }
 
@@ -148,11 +135,11 @@ namespace OKeeffeCraft.Api.Controllers
             return Ok(response);
         }
 
-        [HttpGet("{id:int}")]
+        [HttpGet("{id}")]
         [SwaggerOperation(Summary = "Get account by id.")]
         [SwaggerResponse(200, "Account found.", typeof(ServiceResponse<AccountResponse>))]
         [SwaggerResponse(400, "Error message (generally a validation error)", typeof(ServiceResponse<string>))]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById(string id)
         {
             if(Account == null)
                 return Unauthorized(new ServiceResponse<string> { Data = null, Message = "Unauthorized", Success = false });
@@ -183,11 +170,11 @@ namespace OKeeffeCraft.Api.Controllers
             return Ok(account);
         }
 
-        [HttpPut("{id:int}")]
+        [HttpPut("{id}")]
         [SwaggerOperation(Summary = "Update an account.")]
         [SwaggerResponse(200, "Account updated.", typeof(ServiceResponse<AccountResponse>))]
         [SwaggerResponse(400, "Error message (generally a validation error)", typeof(ServiceResponse<string>))]
-        public async Task<IActionResult> Update(int id, UpdateRequest model)
+        public async Task<IActionResult> Update(string id, UpdateRequest model)
         {
             if(Account == null)
                 return Unauthorized(new { message = "Unauthorized" });
@@ -196,18 +183,18 @@ namespace OKeeffeCraft.Api.Controllers
                 return Unauthorized(new { message = "Unauthorized" });
 
             // only admins can update role
-            /*if (Account.Role != Role.Admin)
-                model.Role = null;*/
+            if (Account.Role != Role.Admin)
+                model.Role = Role.User.ToString();
 
             var account = await _accountService.Update(id, model);
             return Ok(account);
         }
 
-        [HttpDelete("{id:int}")]
+        [HttpDelete("{id}")]
         [SwaggerOperation(Summary = "Delete an account.")]
         [SwaggerResponse(200, "Account deleted.", typeof(ServiceResponse<string>))]
         [SwaggerResponse(400, "Error message (generally a validation error)", typeof(ServiceResponse<string>))]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(string id)
         {
             if (Account == null)
                 return Unauthorized(new { message = "Unauthorized" });
@@ -220,17 +207,6 @@ namespace OKeeffeCraft.Api.Controllers
         }
 
         // helper methods
-
-        private void SetTokenCookie(string? token)
-        {
-            if (token == null) return;
-            var cookieOptions = new CookieOptions
-            {
-                HttpOnly = true,
-                Expires = DateTime.UtcNow.AddDays(7)
-            };
-            Response.Cookies.Append("refreshToken", token, cookieOptions);
-        }
 
         private string IpAddress()
         {

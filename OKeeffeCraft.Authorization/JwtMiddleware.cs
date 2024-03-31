@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
+using OKeeffeCraft.Core.Interfaces;
 using OKeeffeCraft.Database;
 using OKeeffeCraft.Helpers;
 
@@ -20,7 +21,7 @@ namespace OKeeffeCraft.Authorization
         /// <param name="context">The HttpContext for the current request.</param>
         /// <param name="dataContext">The data context for accessing the database.</param>
         /// <param name="jwtUtils">The service for JWT token utilities.</param>
-        public async Task Invoke(HttpContext context, DataContext dataContext, IJwtUtils jwtUtils)
+        public async Task Invoke(HttpContext context, IMongoDBService dataContext, IJwtUtils jwtUtils)
         {
             // Check if Authorization header is present and not null
             if (context.Request.Headers.ContainsKey("Authorization"))
@@ -32,7 +33,7 @@ namespace OKeeffeCraft.Authorization
                     if (accountId != null)
                     {
                         // Attach account to context on successful JWT validation
-                        context.Items["Account"] = await dataContext.Accounts.FindAsync(accountId.Value);
+                        context.Items["Account"] = await dataContext.GetAccountByIdAsync(accountId);
                     }
                 }
             }

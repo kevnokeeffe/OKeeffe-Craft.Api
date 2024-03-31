@@ -1,10 +1,8 @@
 ﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using OKeeffeCraft.Authorization;
 using OKeeffeCraft.Authorization.Interfaces;
 using OKeeffeCraft.Core.Interfaces;
-using OKeeffeCraft.Database;
 using OKeeffeCraft.Entities;
 using OKeeffeCraft.Helpers;
 using OKeeffeCraft.Models;
@@ -16,7 +14,7 @@ namespace OKeeffeCraft.Core.Services
 {
     public class AccountService : IAccountService
     {
-        private readonly DataContext _context;
+        private readonly IMongoDBService _context;
         private readonly IJwtUtils _jwtUtils;
         private readonly IMapper _mapper;
         private readonly AppSettings _appSettings;
@@ -25,7 +23,7 @@ namespace OKeeffeCraft.Core.Services
         private readonly IAuthIdentityService _authIdentityService;
 
         public AccountService(
-            DataContext context,
+            IMongoDBService context,
             IJwtUtils jwtUtils,
             IMapper mapper,
             IOptions<AppSettings> appSettings,
@@ -52,7 +50,7 @@ namespace OKeeffeCraft.Core.Services
         {
             try
             {
-                var account = await _context.Accounts.FirstOrDefaultAsync(x => x.Email == model.Email);
+                var account = await _context.GetAccountByEmailAsync(model.Email);
 
                 // validate
                 if (account == null || !BC.Verify(model.Password, account.PasswordHash))
@@ -63,15 +61,14 @@ namespace OKeeffeCraft.Core.Services
 
                 // Authentication successful, so generate JWT and refresh tokens
                 var jwtToken = _jwtUtils.GenerateJwtToken(account);
-                var refreshToken = _jwtUtils.GenerateRefreshToken(ipAddress);
+                var refreshToken = await _jwtUtils.GenerateRefreshToken(ipAddress);
                 account.RefreshTokens.Add(refreshToken);
 
                 // Remove old refresh tokens from account
                 RemoveOldRefreshTokens(account);
 
                 // Save changes to the database
-                _context.Update(account);
-                await _context.SaveChangesAsync();
+                await _context.UpdateAccountAsync(account.Id, account);
 
                 var response = _mapper.Map<AuthenticateResponse>(account);
                 response.JwtToken = jwtToken;
@@ -110,23 +107,22 @@ namespace OKeeffeCraft.Core.Services
                 {
                     // Revoke all descendant tokens in case this token has been compromised
                     RevokeDescendantRefreshTokens(refreshToken, account, ipAddress, $"Attempted reuse of revoked ancestor token: {token}");
-                    _context.Update(account);
-                    await _context.SaveChangesAsync();
+                    await _context.UpdateAccountAsync(account.Id, account);
+
                 }
 
                 if (!refreshToken.IsActive)
                     throw new AppException("Invalid token");
 
                 // Replace old refresh token with a new one (rotate token)
-                var newRefreshToken = RotateRefreshToken(refreshToken, ipAddress);
+                var newRefreshToken = await RotateRefreshToken(refreshToken, ipAddress);
                 account.RefreshTokens.Add(newRefreshToken);
 
                 // Remove old refresh tokens from account
                 RemoveOldRefreshTokens(account);
 
                 // Save changes to the database
-                _context.Update(account);
-                await _context.SaveChangesAsync();
+                await _context.UpdateAccountAsync(account.Id, account);    
 
                 // Generate new JWT
                 var jwtToken = _jwtUtils.GenerateJwtToken(account);
@@ -166,8 +162,7 @@ namespace OKeeffeCraft.Core.Services
 
                 // Revoke token and save
                 RevokeRefreshToken(refreshToken, ipAddress, "Revoked without replacement");
-                _context.Update(account);
-                await _context.SaveChangesAsync();
+                await _context.UpdateAccountAsync(account.Id, account);
 
                 return new ServiceResponse<string> { Data = null, Message = "Refresh token revoked.", Success = true };
             }
@@ -184,7 +179,7 @@ namespace OKeeffeCraft.Core.Services
         /// <param name="model">The registration request model containing user details.</param>
         /// <param name="origin">The origin URL for verification email (optional).</param>
         /// <returns>A task representing the asynchronous operation, containing the service response with the registered account details.</returns>
-        public async Task<ServiceResponse<AccountModel>> Register(RegisterRequest model, string origin)
+        public async Task<ServiceResponse<AccountResponse>> Register(RegisterRequest model)
         {
             try
             {
@@ -192,18 +187,18 @@ namespace OKeeffeCraft.Core.Services
                     throw new AppException("Model is null");
 
                 // Validate
-                if (await _context.Accounts.AnyAsync(x => x.Email == model.Email))
+                if (await _context.GetAccountByEmailAsync(model.Email)!=null)
                 {
                     // Send already registered error in email to prevent account enumeration
-                    _emailService.SendAlreadyRegisteredEmail(model.Email, origin);
-                    return new ServiceResponse<AccountModel> { Data = null, Message = "Email address already registered.", Success = false };
+                    _emailService.SendAlreadyRegisteredEmail(model.Email);
+                    return new ServiceResponse<AccountResponse> { Data = null, Message = "Email address already registered.", Success = false };
                 }
 
                 // Map model to new account object
                 var account = _mapper.Map<Account>(model);
 
                 // First registered account is an admin
-                var isFirstAccount = !await _context.Accounts.AnyAsync();
+                var isFirstAccount = await _context.GetAccountsAsync() == null;
                 account.Role = isFirstAccount ? Role.Admin : Role.User;
                 account.Created = DateTime.UtcNow;
                 account.VerificationToken = await GenerateVerificationToken();
@@ -212,18 +207,17 @@ namespace OKeeffeCraft.Core.Services
                 account.PasswordHash = BC.HashPassword(model.Password);
 
                 // Save account
-                _context.Accounts.Add(account);
-                await _context.SaveChangesAsync();
+                await _context.CreateAccountAsync(account);
 
                 // Send email
-                _emailService.SendVerificationEmail(account, origin);
+                _emailService.SendVerificationEmail(account);
                 await _logService.ActivityLog("User registered successfully", "Email", account.Email);
-                return new ServiceResponse<AccountModel> { Data = _mapper.Map<AccountModel>(account), Message = "Registration successful, please check your email for verification instructions.", Success = true };
+                return new ServiceResponse<AccountResponse> { Data = _mapper.Map<AccountResponse>(account), Message = "Registration successful, please check your email for verification instructions.", Success = true };
             }
             catch (Exception error)
             {
                 await _logService.ErrorLog(error.Message, error.StackTrace, "Email", model.Email);
-                return new ServiceResponse<AccountModel> { Success = false, Message = error.Message, Data = null };
+                return new ServiceResponse<AccountResponse> { Success = false, Message = error.Message, Data = null };
             }
         }
 
@@ -236,7 +230,7 @@ namespace OKeeffeCraft.Core.Services
         {
             try
             {
-                var account = await _context.Accounts.SingleOrDefaultAsync(x => x.VerificationToken == token) ?? throw new AppException("Verification failed");
+                var account = await _context.GetAccountByVerificationTokenAsync(token) ?? throw new AppException("Verification failed");
 
                 if (account.IsVerified)
                     return new ServiceResponse<string> { Data = null, Message = "Email already verified", Success = false };
@@ -244,10 +238,9 @@ namespace OKeeffeCraft.Core.Services
                 account.Verified = DateTime.UtcNow;
                 account.VerificationToken = null;
 
-                _context.Accounts.Update(account);
-                await _context.SaveChangesAsync();
+                await _context.UpdateAccountAsync(account.Id, account);
 
-                return new ServiceResponse<string> { Data = null, Message = "Verification successful, you can now login", Success = true };
+                return new ServiceResponse<string> { Data = account.Email, Message = "Verification successful, you can now login", Success = true };
             }
             catch (Exception error)
             {
@@ -262,11 +255,11 @@ namespace OKeeffeCraft.Core.Services
         /// <param name="model">The request model containing the email address of the user.</param>
         /// <param name="origin">The origin URL for password reset link (optional).</param>
         /// <returns>A task representing the asynchronous operation, containing the service response indicating the result of the password reset initiation.</returns>
-        public async Task<ServiceResponse<string>> ForgotPassword(ForgotPasswordRequest model, string origin)
+        public async Task<ServiceResponse<string>> ForgotPassword(ForgotPasswordRequest model)
         {
             try
             {
-                var account = await _context.Accounts.SingleOrDefaultAsync(x => x.Email == model.Email);
+                var account = await _context.GetAccountByEmailAsync(model.Email);
 
                 // Always return an OK response to prevent email enumeration
                 if (account == null) return new ServiceResponse<string> { Data = null, Message = "No account associated with that email", Success = false };
@@ -275,11 +268,10 @@ namespace OKeeffeCraft.Core.Services
                 account.ResetToken = await GenerateResetToken();
                 account.ResetTokenExpires = DateTime.UtcNow.AddDays(1);
 
-                _context.Accounts.Update(account);
-                await _context.SaveChangesAsync();
+                await _context.UpdateAccountAsync(account.Id, account);
 
                 // Send email
-                _emailService.SendPasswordResetEmail(account, origin);
+                _emailService.SendPasswordResetEmail(account);
                 return new ServiceResponse<string> { Data = null, Message = "Please check your email for password reset instructions", Success = true };
             }
             catch (Exception error)
@@ -326,8 +318,7 @@ namespace OKeeffeCraft.Core.Services
                 account.ResetToken = null;
                 account.ResetTokenExpires = null;
 
-                _context.Accounts.Update(account);
-                await _context.SaveChangesAsync();
+                await _context.UpdateAccountAsync(account.Id, account);
                 return new ServiceResponse<AccountModel> { Data = _mapper.Map<AccountModel>(account), Message = "Password reset successful, you can now login", Success = true };
 
             }
@@ -346,7 +337,7 @@ namespace OKeeffeCraft.Core.Services
         {
             try
             {
-                var accounts = await _context.Accounts.ToListAsync();
+                var accounts = await _context.GetAccountsAsync();
                 return new ServiceResponse<IEnumerable<AccountResponse>> { Data = _mapper.Map<IList<AccountResponse>>(accounts), Message = "Accounts retrieved successfully", Success = true };
             }
             catch (Exception error)
@@ -361,7 +352,7 @@ namespace OKeeffeCraft.Core.Services
         /// </summary>
         /// <param name="id">The unique identifier of the user account.</param>
         /// <returns>A task representing the asynchronous operation, containing the service response with the retrieved user account.</returns>
-        public async Task<ServiceResponse<AccountResponse>> GetById(int id)
+        public async Task<ServiceResponse<AccountResponse>> GetById(string id)
         {
             try
             {
@@ -384,7 +375,7 @@ namespace OKeeffeCraft.Core.Services
         {
             try
             {             // Validate
-                if (await _context.Accounts.AnyAsync(x => x.Email == model.Email))
+                if (await _context.GetAccountByEmailAsync(model.Email) != null)
                     throw new AppException($"Email '{model.Email}' is already registered");
 
                 // Map model to new account object
@@ -396,8 +387,7 @@ namespace OKeeffeCraft.Core.Services
                 account.PasswordHash = BC.HashPassword(model.Password);
 
                 // Save account
-                _context.Accounts.Add(account);
-                await _context.SaveChangesAsync();
+                await _context.CreateAccountAsync(account);
 
                 return new ServiceResponse<AccountResponse> { Success = true, Message = "Account created successfully.", Data = _mapper.Map<AccountResponse>(account) };
             }
@@ -414,14 +404,14 @@ namespace OKeeffeCraft.Core.Services
         /// <param name="id">The unique identifier of the user account to update.</param>
         /// <param name="model">The request model containing the updated details of the account.</param>
         /// <returns>A task representing the asynchronous operation, containing the service response with the updated user account.</returns>
-        public async Task<ServiceResponse<AccountResponse>> Update(int id, UpdateRequest model)
+        public async Task<ServiceResponse<AccountResponse>> Update(string id, UpdateRequest model)
         {
             try
             {
                 var account = await GetAccount(id);
 
                 // Validate
-                if (account.Email != model.Email && await _context.Accounts.AnyAsync(x => x.Email == model.Email))
+                if (account.Email != model.Email && await _context.GetAccountByEmailAsync(model.Email)!=null)
                     throw new AppException($"Email '{model.Email}' is already registered");
 
                 // Hash password if it was entered
@@ -431,8 +421,7 @@ namespace OKeeffeCraft.Core.Services
                 // Copy model to account and save
                 _mapper.Map(model, account);
                 account.Updated = DateTime.UtcNow;
-                _context.Accounts.Update(account);
-                await _context.SaveChangesAsync();
+                await _context.UpdateAccountAsync(id, account);
 
                 return new ServiceResponse<AccountResponse> { Success = true, Message = "Account updated successfully.", Data = _mapper.Map<AccountResponse>(account) };
             }
@@ -448,13 +437,12 @@ namespace OKeeffeCraft.Core.Services
         /// </summary>
         /// <param name="id">The unique identifier of the user account to delete.</param>
         /// <returns>A task representing the asynchronous operation, containing the service response indicating the result of the deletion.</returns>
-        public async Task<ServiceResponse<string>> Delete(int id)
+        public async Task<ServiceResponse<string>> Delete(string id)
         {
             try
             {
                 var account = await GetAccount(id);
-                _context.Accounts.Remove(account);
-                await _context.SaveChangesAsync();
+                await _context.RemoveAccountAsync(id);
                 return new ServiceResponse<string> { Success = true, Message = "Account deleted successfully." };
             }
             catch (Exception error)
@@ -469,9 +457,9 @@ namespace OKeeffeCraft.Core.Services
         /// </summary>
         /// <param name="id">The unique identifier of the user account to retrieve.</param>
         /// <returns>A task representing the asynchronous operation, containing the retrieved user account.</returns>
-        private async Task<Account> GetAccount(int id)
+        private async Task<Account> GetAccount(string id)
         {
-            var account = await _context.Accounts.FindAsync(id);
+            var account = await _context.GetAccountByIdAsync(id);
             return account ?? throw new KeyNotFoundException("Account not found");
         }
 
@@ -482,7 +470,7 @@ namespace OKeeffeCraft.Core.Services
         /// <returns>A task representing the asynchronous operation, containing the user account associated with the refresh token.</returns>
         private async Task<Account> GetAccountByRefreshToken(string token)
         {
-            var account = await _context.Accounts.SingleOrDefaultAsync(u => u.RefreshTokens.Any(t => t.Token == token));
+            var account = await _context.GetAccountByRefreshTokenAsync(token);
             return account ?? throw new AppException("Invalid token");
         }
 
@@ -493,8 +481,7 @@ namespace OKeeffeCraft.Core.Services
         /// <returns>A task representing the asynchronous operation, containing the user account associated with the reset token.</returns>
         private async Task<Account> GetAccountByResetToken(string token)
         {
-            var account = await _context.Accounts.SingleOrDefaultAsync(x =>
-                x.ResetToken == token && x.ResetTokenExpires > DateTime.UtcNow);
+            var account = await _context.GetAccountByResetTokenAsync(token);
             return account ?? throw new AppException("Invalid token");
         }
 
@@ -508,8 +495,8 @@ namespace OKeeffeCraft.Core.Services
             var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(64));
 
             // Ensure token is unique by checking against database
-            var tokenIsUnique = !await _context.Accounts.AnyAsync(x => x.ResetToken == token);
-            if (!tokenIsUnique)
+            var notUnique = await _context.GetAccountByResetTokenAsync(token) != null;
+            if (notUnique)
                 return await GenerateResetToken();
 
             return token;
@@ -525,8 +512,8 @@ namespace OKeeffeCraft.Core.Services
             var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(64));
 
             // Ensure token is unique by checking against database
-            var tokenIsUnique = !await _context.Accounts.AnyAsync(x => x.VerificationToken == token);
-            if (!tokenIsUnique)
+            var notUnique = await _context.GetAccountByVerificationTokenAsync(token) != null;
+            if (notUnique)
                 return await GenerateVerificationToken();
 
             return token;
@@ -538,9 +525,9 @@ namespace OKeeffeCraft.Core.Services
         /// <param name="refreshToken">The refresh token to rotate.</param>
         /// <param name="ipAddress">The IP address of the requesting client.</param>
         /// <returns>The new refresh token.</returns>
-        private RefreshToken RotateRefreshToken(RefreshToken refreshToken, string ipAddress)
+        private async Task<RefreshToken> RotateRefreshToken(RefreshToken refreshToken, string ipAddress)
         {
-            var newRefreshToken = _jwtUtils.GenerateRefreshToken(ipAddress);
+            var newRefreshToken = await _jwtUtils.GenerateRefreshToken(ipAddress);
             RevokeRefreshToken(refreshToken, ipAddress, "Replaced by new token", newRefreshToken.Token);
             return newRefreshToken;
         }

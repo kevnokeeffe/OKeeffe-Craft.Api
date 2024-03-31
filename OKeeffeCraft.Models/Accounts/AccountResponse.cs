@@ -2,10 +2,8 @@
 {
     public class AccountResponse
     {
-        public int Id { get; set; }
-        public required string Title { get; set; }
-        public required string FirstName { get; set; }
-        public required string LastName { get; set; }
+        public required string Id { get; set; }
+        public required string FullName { get; set; }
         public required string Email { get; set; }
         public required string Role { get; set; }
         public DateTime Created { get; set; }

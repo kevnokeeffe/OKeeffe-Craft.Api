@@ -1,29 +1,30 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using MongoDB.Driver;
+using OKeeffeCraft.Entities;
 
-namespace OKeeffeCraft.Helpers
+namespace OKeeffeCraft.Database
 {
-    public class MigrationHelper
+    public class MongoDataContext
     {
         private readonly IConfiguration _configuration;
         public readonly IMongoDatabase db;
 
-        public MigrationHelper(IConfiguration configuration)
+        public MongoDataContext(IConfiguration configuration)
         {
             _configuration = configuration;
             MongoClient client = new(_configuration["MongoDBConnectionString"]);
+            CheckAndCreateDatabase(client);
             db = client.GetDatabase(_configuration["MongoDBName"]);
-            CheckAndCreateDatabase(client, _configuration);
         }
 
-
-        public async void CheckAndCreateDatabase(MongoClient client, IConfiguration _configuration)
+        private async void CheckAndCreateDatabase(MongoClient client)
         {
             var databaseName = _configuration["MongoDBName"]; // Replace with your desired database name
 
             var databaseNames = await client.ListDatabaseNamesAsync();
 
-
+            
             Console.WriteLine(databaseNames);
             if (!databaseNames.ToList().Contains(databaseName))
             {
@@ -36,10 +37,10 @@ namespace OKeeffeCraft.Helpers
             {
                 Console.WriteLine($"Database already exists: {databaseName}");
             }
-            CheckAndCreateCollections(client, _configuration);
+            CheckAndCreateCollections(client);
         }
 
-        private async void CheckAndCreateCollections(MongoClient client, IConfiguration _configuration)
+        private async void CheckAndCreateCollections(MongoClient client)
         {
             var databaseName = _configuration["MongoDBName"]; // Replace with your desired database name
 
@@ -74,8 +75,5 @@ namespace OKeeffeCraft.Helpers
 
             // Add more checks and collection creations as needed
         }
-
-       
     }
 }
-

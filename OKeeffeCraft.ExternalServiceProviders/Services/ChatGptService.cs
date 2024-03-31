@@ -6,10 +6,8 @@ using OKeeffeCraft.Models;
 using OKeeffeCraft.Models.OpenAI;
 using OpenAI;
 using OpenAI.Assistants;
-using OpenAI.Chat;
 using OpenAI.Threads;
 using System.Diagnostics;
-using System.Threading;
 
 namespace OKeeffeCraft.ExternalServiceProviders.Services
 {
@@ -107,6 +105,15 @@ namespace OKeeffeCraft.ExternalServiceProviders.Services
 
         public async Task<ServiceResponse<object>> GetAssistantThread(string threadId)
         {
+            if (threadId.IsNullOrEmpty() || threadId == null)
+            {
+                return new ServiceResponse<object>
+                {
+                    Data = null,
+                    Message = "Thread Id is required",
+                    Success = false
+                };
+            }
             try
             {
                 var thread = await RetrieveThreadAsync(threadId);
@@ -132,6 +139,15 @@ namespace OKeeffeCraft.ExternalServiceProviders.Services
 
         public async Task<ServiceResponse<object>> ListThreadMessages(string threadId)
         {
+            if (threadId.IsNullOrEmpty() || threadId == null)
+            {
+                return new ServiceResponse<object>
+                {
+                    Data = null,
+                    Message = "Thread Id is required",
+                    Success = false
+                };
+            }
             try
             {
                 var messageList = await _api.ThreadsEndpoint.ListMessagesAsync(threadId);
@@ -157,6 +173,15 @@ namespace OKeeffeCraft.ExternalServiceProviders.Services
 
         public async Task<ServiceResponse<object>> CreateAndSendMessage(AssistantMessageRequest model)
         {
+            if (model.ThreadId.IsNullOrEmpty() || model.ThreadId == null || model.Message.IsNullOrEmpty() || model.Message == null)
+            {
+                return new ServiceResponse<object>
+                {
+                    Data = null,
+                    Message = "Thread Id & message are required",
+                    Success = false
+                };
+            }
             try
             {
                 var response = await CreateMessageAsync(model.ThreadId, model.Message);
@@ -180,11 +205,20 @@ namespace OKeeffeCraft.ExternalServiceProviders.Services
             }
         }
 
-        public async Task<ServiceResponse<object>> RetriveMessage(RetriveMessageRequest model)
+        public async Task<ServiceResponse<object>> RetriveMessage(string threadId, string messageId)
         {
+            if (threadId.IsNullOrEmpty() || threadId == null || messageId.IsNullOrEmpty() || messageId == null)
+            {
+                return new ServiceResponse<object>
+                {
+                    Data = null,
+                    Message = "Thread & message ids are required",
+                    Success = false
+                };
+            }
             try
             {
-                var message = await _api.ThreadsEndpoint.RetrieveMessageAsync(model.ThreadId, model.MessageId);
+                var message = await _api.ThreadsEndpoint.RetrieveMessageAsync(threadId, messageId);
                 await _logService.ActivityLog("Message retrieved successfully", "Open AI", "RetrieveMessageAsync");
                 return new ServiceResponse<object>
                 {
@@ -207,6 +241,15 @@ namespace OKeeffeCraft.ExternalServiceProviders.Services
 
         public async Task<ServiceResponse<object>> ListThreadRuns(string threadId)
         {
+            if (threadId.IsNullOrEmpty() || threadId == null)
+            {
+                return new ServiceResponse<object>
+                {
+                    Data = null,
+                    Message = "Thread Id is required",
+                    Success = false
+                };
+            }
             try
             {
                 var runList = await _api.ThreadsEndpoint.ListRunsAsync(threadId);
@@ -230,93 +273,200 @@ namespace OKeeffeCraft.ExternalServiceProviders.Services
             }
         }
 
-        public async Task<ServiceResponse<object>> CreateRun(string text)
+        public async Task<ServiceResponse<object>> CreateRun(string message)
         {
-            var assistant = await RetriveAssistantAsync();
-            var thread = await CreateThreadAsync();
-            var message = await CreateMessageAsync(thread, text);
-            var run = await CreateRunAsync(thread, assistant);
-            return new ServiceResponse<object>
-            {
-                Data = run,
-                Message = "Run created successfully",
-                Success = true
-            };
-        }
-
-        public async Task<ServiceResponse<object>> RetrieveRun(string threadId, string runId)
-        {
-            var run = await RetriveRunAsync(threadId, runId);
-            var timeout = TimeSpan.FromSeconds(10); // Set your desired timeout duration here
-            var stopwatch = Stopwatch.StartNew();
-            // Wait for the run to complete
-            while (run.Status != RunStatus.Completed)
-            {
-                if (stopwatch.Elapsed >= timeout)
-                {
-                    return new ServiceResponse<object>
-                    {
-                        Data = null,
-                        Message = "Run not completed, response timeout",
-                        Success = false
-                    };
-                }
-                await Task.Delay(TimeSpan.FromSeconds(2));
-                run = await RetriveRunAsync(threadId, runId);
-
-            }
-
-            var response = await run.ListMessagesAsync();
-            return new ServiceResponse<object>
-            {
-                Data = response,
-                Message = "Run retrieved successfully",
-                Success = true
-            };
-
-        }
-
-        public async Task<ServiceResponse<object>> CreateRunAndGetResult(CreateRunModel model)
-        {
-            var timeout = TimeSpan.FromSeconds(10); // Set your desired timeout duration here
-            var stopwatch = Stopwatch.StartNew();
-            var assistant = await RetriveAssistantAsync();
-
-            ThreadResponse? thread;
-            if (!model.ThreadId.IsNullOrEmpty() && model.ThreadId != null) thread = await RetrieveThreadAsync(model.ThreadId);
-            else thread = await CreateThreadAsync();
-
-            await CreateMessageAsync(thread, model.Message);
-            var run = await CreateRunAsync(thread, assistant);
-            while (run.Status != RunStatus.Completed)
-            {
-                if (stopwatch.Elapsed >= timeout)
-                {
-                    return new ServiceResponse<object>
-                    {
-                        Data = null,
-                        Message = "Run not completed, response timeout",
-                        Success = false
-                    };
-                }
-                await Task.Delay(TimeSpan.FromSeconds(2));
-                run = await RetriveRunAsync(thread.Id, run.Id);
-            }
-            if(run.Status == RunStatus.Completed)
-            {
-                return new ServiceResponse<object>
-                {
-                    Data = await run.ListMessagesAsync(),
-                    Message = "Run completed successfully",
-                    Success = false
-                };
-            }
-            else
+            if (message.IsNullOrEmpty() || message == null)
             {
                 return new ServiceResponse<object>
                 {
                     Data = null,
-                    Message = "Run not completed, response timeout",
+                    Message = "Message is required",
+                    Success = false
+                };
+            }
+            try
+            {
+                var assistant = await RetriveAssistantAsync();
+                var thread = await CreateThreadAsync();
+                await CreateMessageAsync(thread, message);
+                var run = await CreateRunAsync(thread, assistant);
+                await _logService.ActivityLog("Run created successfully", "Open AI", "CreateRunAsync");
+                return new ServiceResponse<object>
+                {
+                    Data = run,
+                    Message = "Run created successfully",
+                    Success = true
+                };
+            }
+            catch (Exception ex)
+            {
+                await _logService.ErrorLog(ex.Message, ex.StackTrace, "Open AI", "CreateRunAsync");
+                return new ServiceResponse<object>
+                {
+                    Data = null,
+                    Message = "Error creating run",
+                    Success = false
+                };
+            }
+        }
+
+        public async Task<ServiceResponse<object>> RetrieveRun(string threadId, string runId)
+        {
+            if (threadId.IsNullOrEmpty() || threadId == null || runId.IsNullOrEmpty() || runId == null)
+            {
+                return new ServiceResponse<object>
+                {
+                    Data = null,
+                    Message = "Thread & run ids are required",
+                    Success = false
+                };
+            }
+            try
+            {
+                var run = await RetriveRunAsync(threadId, runId);
+                var timeout = TimeSpan.FromSeconds(10); // Set your desired timeout duration here
+                var stopwatch = Stopwatch.StartNew();
+                // Wait for the run to complete
+                while (run.Status != RunStatus.Completed)
+                {
+                    if (stopwatch.Elapsed >= timeout)
+                    {
+                        await _logService.ErrorLog("Run not completed, response timeout", null, "Open AI", "RetrieveRun");
+                        return new ServiceResponse<object>
+                        {
+                            Data = null,
+                            Message = "Run not completed, response timeout",
+                            Success = false
+                        };
+                    }
+                    await Task.Delay(TimeSpan.FromSeconds(2));
+                    run = await RetriveRunAsync(threadId, runId);
+
+                }
+
+                var response = await run.ListMessagesAsync();
+                await _logService.ActivityLog("Run retrieved successfully", "Open AI", "RetrieveRunAsync");
+                return new ServiceResponse<object>
+                {
+                    Data = response,
+                    Message = "Run retrieved successfully",
+                    Success = true
+                };
+            }
+            catch (Exception ex)
+            {
+                await _logService.ErrorLog(ex.Message, ex.StackTrace, "Open AI", "RetrieveRunAsync");
+                return new ServiceResponse<object>
+                {
+                    Data = null,
+                    Message = "Error retriving run",
+                    Success = false
+                };
+            }
+        }
+
+        public async Task<ServiceResponse<ListResponse<MessageResponse>>> CreateRunAndGetResult(CreateRunModel model)
+        {
+            if (model == null || model.Message.IsNullOrEmpty() || model.Message == null)
+            {
+                return new ServiceResponse<ListResponse<MessageResponse>>
+                {
+                    Data = null,
+                    Message = "Message is required",
+                    Success = false
+                };
+            }
+            try
+            {
+                var timeout = TimeSpan.FromSeconds(30); // Set your desired timeout duration here
+                var stopwatch = Stopwatch.StartNew();
+                var assistant = await RetriveAssistantAsync();
+
+                ThreadResponse? thread;
+                if (!model.ThreadId.IsNullOrEmpty() && model.ThreadId != null && model.ThreadId != "null") thread = await RetrieveThreadAsync(model.ThreadId);
+                else thread = await CreateThreadAsync();
+
+                await CreateMessageAsync(thread, model.Message);
+                var run = await CreateRunAsync(thread, assistant);
+                while (run.Status != RunStatus.Completed)
+                {
+                    if (stopwatch.Elapsed >= timeout)
+                    {
+                        await _logService.ErrorLog("Run not completed, response timeout", null, "Open AI", "CreateRunAndGetResult");
+                        return new ServiceResponse<ListResponse<MessageResponse>>
+                        {
+                            Data = null,
+                            Message = "Run not completed, response timeout",
+                            Success = false
+                        };
+                    }
+                    await Task.Delay(TimeSpan.FromSeconds(2));
+                    run = await RetriveRunAsync(thread.Id, run.Id);
+                }
+                if (run.Status == RunStatus.Completed)
+                {
+                    await _logService.ActivityLog("Run completed successfully", "Open AI", "CreateRunAndGetResult");
+                    var messages = await run.ListMessagesAsync();
+                    return new ServiceResponse<ListResponse<MessageResponse>>
+                    {
+                        Data = messages,
+                        Message = "Run completed successfully",
+                        Success = false
+                    };
+                }
+                else
+                {
+                    await _logService.ErrorLog("Run not completed, response timeout", null, "Open AI", "CreateRunAndGetResult");
+                    return new ServiceResponse<ListResponse<MessageResponse>>
+                    {
+                        Data = null,
+                        Message = "Run not completed, response timeout",
+                        Success = false
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                await _logService.ErrorLog(ex.Message, ex.StackTrace, "Open AI", "CreateRunAndGetResult");
+                return new ServiceResponse<ListResponse<MessageResponse>>
+                {
+                    Data = null,
+                    Message = "Error creating run",
+                    Success = false
+                };
+            }
+        }
+
+        public async Task<ServiceResponse<object>> GetThreadMessages(string threadId)
+        {
+            if (threadId.IsNullOrEmpty() || threadId == null)
+            {
+                return new ServiceResponse<object>
+                {
+                    Data = null,
+                    Message = "Thread Id is required",
+                    Success = false
+                };
+            }
+            try
+            {
+                var thread = await RetrieveThreadAsync(threadId);
+                var messages = await thread.ListMessagesAsync();
+                await _logService.ActivityLog("Messages retrieved successfully", "Open AI", "GetThreadMessages");
+                return new ServiceResponse<object>
+                {
+                    Data = messages,
+                    Message = "Messages retrieved successfully",
+                    Success = true
+                };
+            }
+            catch (Exception ex)
+            {
+                await _logService.ErrorLog(ex.Message, ex.StackTrace, "Open AI", "GetThreadMessages");
+                return new ServiceResponse<object>
+                {
+                    Data = null,
+                    Message = "Error retrieving messages",
                     Success = false
                 };
             }
@@ -346,13 +496,13 @@ namespace OKeeffeCraft.ExternalServiceProviders.Services
             return assistant;
         }
 
-        private async Task<MessageResponse> CreateMessageAsync(string threadId, string text)
+        private async Task<MessageResponse> CreateMessageAsync(string threadId, string message)
         {
             var request = new CreateMessageRequest(
-                               content: text
+                               content: message
                                           );
-            var message = await _api.ThreadsEndpoint.CreateMessageAsync(threadId, request);
-            return message;
+            var result = await _api.ThreadsEndpoint.CreateMessageAsync(threadId, request);
+            return result;
         }
 
         private async Task<ThreadResponse> RetrieveThreadAsync(string threadId)

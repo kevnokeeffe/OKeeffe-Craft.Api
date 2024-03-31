@@ -9,7 +9,7 @@ namespace OKeeffeCraft.Core.Interfaces
         Task ErrorLog(string message, string? stackTrace, string? identifierType, string? identifier);
         Task<ServiceResponse<IEnumerable<ActivityLog>>> GetActivityLogs();
         Task<ServiceResponse<IEnumerable<ErrorLog>>> GetErrorLogs();
-        Task<ServiceResponse<ActivityLog>> GetActivityLogById(int id);
-        Task<ServiceResponse<ErrorLog>> GetErrorLogById(int id);
+        Task<ServiceResponse<ActivityLog>> GetActivityLogById(string id);
+        Task<ServiceResponse<ErrorLog>> GetErrorLogById(string id);
     }
 }

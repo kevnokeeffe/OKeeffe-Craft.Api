@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OKeeffeCraft.Core.Interfaces;
-using OKeeffeCraft.Database;
 using OKeeffeCraft.Entities;
 using OKeeffeCraft.Helpers;
 using OKeeffeCraft.Models;
@@ -9,9 +8,9 @@ namespace OKeeffeCraft.Core.Services
 {
     public class LogService : ILogService
     {
-        private readonly DataContext _context;
+        private readonly IMongoDBService _context;
 
-        public LogService(DataContext context)
+        public LogService(IMongoDBService context)
         {
             _context = context;
         }
@@ -25,8 +24,7 @@ namespace OKeeffeCraft.Core.Services
         public async Task ActivityLog(string message, string? identifierType = null, string? identifier = null)
         {
             // Add the activity log to the database asynchronously
-            await _context.ActivityLogs.AddAsync(new ActivityLog { LogDate = DateTime.UtcNow, LogDetails = message, IdentifierType = identifierType, Identifier = identifier });
-            await _context.SaveChangesAsync();
+            await _context.CreateActivityLogAsync(new ActivityLog { LogDate = DateTime.UtcNow, LogDetails = message, IdentifierType = identifierType, Identifier = identifier });
         }
 
         /// <summary>
@@ -39,8 +37,7 @@ namespace OKeeffeCraft.Core.Services
         public async Task ErrorLog(string message, string? stackTrace = null, string? identifierType = null, string? identifier = null)
         {
             // Add the error log to the database asynchronously
-            await _context.ErrorLogs.AddAsync(new ErrorLog { LogDate = DateTime.UtcNow, LogDetails = message, StackTrace = stackTrace, IdentifierType = identifierType, Identifier = identifier });
-            await _context.SaveChangesAsync();
+            await _context.CreateErrorLogAsync(new ErrorLog { LogDate = DateTime.UtcNow, LogDetails = message, StackTrace = stackTrace, IdentifierType = identifierType, Identifier = identifier });
         }
 
         /// <summary>
@@ -51,7 +48,7 @@ namespace OKeeffeCraft.Core.Services
             try
             {
                 // Retrieve activity logs from the database asynchronously
-                var logs = await _context.ActivityLogs.ToListAsync();
+                var logs = await _context.GetActivityLogsAsync();
 
                 // If no logs are found, throw an exception
                 if (logs == null || logs.Count == 0)
@@ -75,7 +72,7 @@ namespace OKeeffeCraft.Core.Services
         {
             try {
             // Retrieve error logs from the database asynchronously
-            var logs = await _context.ErrorLogs.ToListAsync();
+            var logs = await _context.GetErrorLogsAsync();
 
             // If no logs are found, throw an exception
             if (logs == null || logs.Count == 0)
@@ -95,12 +92,12 @@ namespace OKeeffeCraft.Core.Services
         /// Method to asynchronously retrieve an activity log by its ID
         /// </summary>
         /// <param name="id">The ID of the activity log to retrieve</param>
-        public async Task<ServiceResponse<ActivityLog>> GetActivityLogById(int id)
+        public async Task<ServiceResponse<ActivityLog>> GetActivityLogById(string id)
         {
             try
             {
                 // Retrieve the activity log from the database asynchronously
-                var activityLog = await _context.ActivityLogs.FindAsync(id);
+                var activityLog = await _context.GetActivityLogAsync(id);
 
                 // If no activity log is found, throw an exception
                 if (activityLog == null)
@@ -133,12 +130,12 @@ namespace OKeeffeCraft.Core.Services
         /// Method to asynchronously retrieve an error log by its ID
         /// </summary>
         /// <param name="id">The ID of the error log to retrieve</param>
-        public async Task<ServiceResponse<ErrorLog>> GetErrorLogById(int id)
+        public async Task<ServiceResponse<ErrorLog>> GetErrorLogById(string id)
         {
             try
             {
                 // Retrieve the error log from the database asynchronously
-                var errorLog = await _context.ErrorLogs.FindAsync(id);
+                var errorLog = await _context.GetErrorLogAsync(id);
 
                 // If no error log is found, throw an exception
                 if (errorLog == null)

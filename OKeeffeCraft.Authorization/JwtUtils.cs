@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using OKeeffeCraft.Database;
+using OKeeffeCraft.Core.Interfaces;
 using OKeeffeCraft.Entities;
 using OKeeffeCraft.Helpers;
 using System.IdentityModel.Tokens.Jwt;
@@ -13,17 +13,17 @@ namespace OKeeffeCraft.Authorization
     public interface IJwtUtils
     {
         public string GenerateJwtToken(Account account);
-        public int? ValidateJwtToken(string token);
-        public RefreshToken GenerateRefreshToken(string ipAddress);
+        public string? ValidateJwtToken(string token);
+        public Task<RefreshToken> GenerateRefreshToken(string ipAddress);
     }
 
     public class JwtUtils : IJwtUtils
     {
-        private readonly DataContext _context;
+        private readonly IMongoDBService _context;
         private readonly AppSettings _appSettings;
 
         public JwtUtils(
-            DataContext context,
+            IMongoDBService context,
             IOptions<AppSettings> appSettings)
         {
             _context = context;
@@ -55,7 +55,7 @@ namespace OKeeffeCraft.Authorization
         /// </summary>
         /// <param name="token">The JWT token to validate.</param>
         /// <returns>The account ID extracted from the JWT token if validation is successful; otherwise, null.</returns>
-        public int? ValidateJwtToken(string token)
+        public string? ValidateJwtToken(string token)
         {
             if (token == null)
                 return null;
@@ -75,7 +75,7 @@ namespace OKeeffeCraft.Authorization
                 }, out SecurityToken validatedToken);
 
                 var jwtToken = (JwtSecurityToken)validatedToken;
-                var accountId = int.Parse(jwtToken.Claims.First(x => x.Type == "id").Value);
+                var accountId = jwtToken.Claims.First(x => x.Type == "id").Value;
 
                 // Return account id from JWT token if validation successful
                 return accountId;
@@ -92,7 +92,7 @@ namespace OKeeffeCraft.Authorization
         /// </summary>
         /// <param name="ipAddress">The IP address for which the refresh token is generated.</param>
         /// <returns>The generated refresh token.</returns>
-        public RefreshToken GenerateRefreshToken(string ipAddress)
+        public async Task<RefreshToken> GenerateRefreshToken(string ipAddress)
         {
             var refreshToken = new RefreshToken
             {
@@ -105,10 +105,10 @@ namespace OKeeffeCraft.Authorization
             };
 
             // Ensure token is unique by checking against database
-            var tokenIsUnique = !_context.Accounts.Any(a => a.RefreshTokens.Any(t => t.Token == refreshToken.Token));
+            var isUnique = await _context.GetAccountByRefreshTokenAsync(refreshToken.Token);
 
-            if (!tokenIsUnique)
-                return GenerateRefreshToken(ipAddress);
+            if (isUnique != null)
+                return await GenerateRefreshToken(ipAddress);
 
             return refreshToken;
         }

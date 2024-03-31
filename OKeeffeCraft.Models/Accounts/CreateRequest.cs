@@ -5,14 +5,9 @@ namespace OKeeffeCraft.Models.Accounts
 {
     public class CreateRequest
     {
-        [Required]
-        public required string Title { get; set; }
 
         [Required]
-        public required string FirstName { get; set; }
-
-        [Required]
-        public required string LastName { get; set; }
+        public required string FullName { get; set; }
 
         [Required]
         [EnumDataType(typeof(Role))]

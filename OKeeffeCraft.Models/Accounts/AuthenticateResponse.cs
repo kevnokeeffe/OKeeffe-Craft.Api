@@ -4,10 +4,8 @@ namespace OKeeffeCraft.Models.Accounts
 {
     public class AuthenticateResponse
     {
-        public int Id { get; set; }
-        public required string Title { get; set; }
-        public required string FirstName { get; set; }
-        public required string LastName { get; set; }
+        public required string Id { get; set; }
+        public required string FullName { get; set; }
         public required string Email { get; set; }
         public required string Role { get; set; }
         public DateTime Created { get; set; }
@@ -15,7 +13,7 @@ namespace OKeeffeCraft.Models.Accounts
         public bool IsVerified { get; set; }
         public string? JwtToken { get; set; }
 
-        [JsonIgnore] // refresh token is returned in http only cookie
+        // [JsonIgnore] // refresh token is returned in http only cookie
         public string? RefreshToken { get; set; }
     }
 }

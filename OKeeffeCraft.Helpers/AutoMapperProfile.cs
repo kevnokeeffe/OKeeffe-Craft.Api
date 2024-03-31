@@ -2,6 +2,8 @@
 using OKeeffeCraft.Entities;
 using OKeeffeCraft.Models.Accounts;
 using OKeeffeCraft.Models.OpenAI;
+using OpenAI.Threads;
+using OpenAI;
 
 namespace OKeeffeCraft.Helpers
 {
@@ -11,8 +13,6 @@ namespace OKeeffeCraft.Helpers
         public AutoMapperProfile()
         {
             CreateMap<Account, AccountResponse>();
-
-            CreateMap<OpenAI.Assistants.AssistantResponse, Root>();
 
             CreateMap<Account, AuthenticateResponse>();
 
