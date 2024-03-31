@@ -18,7 +18,7 @@ if (builder.Environment.IsDevelopment())
 // Add services to the container.
 var services = builder.Services;
 var env = builder.Environment;
-
+services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
 // services.AddDbContext<DataContext>();
 services.AddCors();
 
@@ -32,7 +32,7 @@ services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 services.AddSwaggerGen();
 
 // configure strongly typed settings object
-services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
+
 services.AddSingleton<MongoDataContext>();
 services.AddHttpContextAccessor();
 
@@ -53,10 +53,10 @@ var app = builder.Build();
 
 // configure HTTP request pipeline
 {
-    // generated swagger json and swagger ui middleware
+    app.UseDeveloperExceptionPage();
     app.UseSwagger();
-    app.UseSwaggerUI(x => { x.SwaggerEndpoint("/swagger/v1/swagger.json", ".NET O'Keeffe Craft Api"); });
-
+    app.UseSwaggerUI(x => { x.SwaggerEndpoint("/swagger/v1/swagger.json", ".NET O'Keeffe Craft Api"); x.RoutePrefix = string.Empty; });
+    
     // global cors policy
     app.UseCors(x => x
         .SetIsOriginAllowed(origin => true)
