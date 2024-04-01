@@ -5,7 +5,6 @@ using OKeeffeCraft.Models.OpenAI;
 using OpenAI.Threads;
 using OpenAI;
 using Azure;
-using OKeeffeCraft.Database;
 
 namespace OKeeffeCraft.Core.Services
 {

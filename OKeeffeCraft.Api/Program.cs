@@ -17,10 +17,21 @@ if (builder.Environment.IsDevelopment())
 
 // Add services to the container.
 var services = builder.Services;
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 var env = builder.Environment;
 services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
 // services.AddDbContext<DataContext>();
-services.AddCors();
+services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+                      policy =>
+                      {
+                          policy.WithOrigins("https://kevokeeffe.ie", "http://localhost:4200", "https://www.kevokeeffe.ie")
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials();
+                      });
+});
 
 services.AddControllers().AddJsonOptions(x =>
 {
@@ -55,14 +66,10 @@ var app = builder.Build();
 {
     app.UseDeveloperExceptionPage();
     app.UseSwagger();
-    app.UseSwaggerUI(x => { x.SwaggerEndpoint("/swagger/v1/swagger.json", ".NET O'Keeffe Craft Api"); x.RoutePrefix = string.Empty; });
-    
+    app.UseSwaggerUI(x => { x.SwaggerEndpoint("/swagger/v1/swagger.json", ".NET Kev O'Keeffe Api"); x.RoutePrefix = string.Empty; });
+
     // global cors policy
-    app.UseCors(x => x
-        .SetIsOriginAllowed(origin => true)
-        .AllowAnyMethod()
-        .AllowAnyHeader()
-        .AllowCredentials());
+    app.UseCors(MyAllowSpecificOrigins);
 
     // global error handler
     app.UseMiddleware<ErrorHandlerMiddleware>();
