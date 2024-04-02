@@ -117,7 +117,6 @@ namespace OKeeffeCraft.Api.Controllers
             return Ok(response);
         }
 
-        [Authorize(Role.Admin)]
         [HttpGet]
         [SwaggerOperation(Summary = "Get all accounts.")]
         [SwaggerResponse(200, "List of all accounts.", typeof(ServiceResponse<AccountResponse>))]
@@ -128,8 +127,8 @@ namespace OKeeffeCraft.Api.Controllers
                 return Unauthorized(new ServiceResponse<string> { Data = null, Message = "Unauthorized", Success = false });
 
             // users can get their own account and admins can get any account
-            if (Account.Role != Role.Admin)
-                return Unauthorized(new ServiceResponse<string> { Data = null, Message = "Unauthorized", Success = false });
+/*            if (Account.Role != Role.Admin)
+                return Unauthorized(new ServiceResponse<string> { Data = null, Message = "Unauthorized", Success = false });*/
 
             var response = await _accountService.GetAll();
             return Ok(response);
@@ -152,7 +151,6 @@ namespace OKeeffeCraft.Api.Controllers
             return Ok(account);
         }
 
-        [Authorize(Role.Admin)]
         [HttpPost]
         [SwaggerOperation(Summary = "Create a new account.")]
         [SwaggerResponse(200, "Account created.", typeof(ServiceResponse<AccountResponse>))]

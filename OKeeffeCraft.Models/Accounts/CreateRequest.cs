@@ -9,9 +9,9 @@ namespace OKeeffeCraft.Models.Accounts
         [Required]
         public required string FullName { get; set; }
 
-        [Required]
+   
         [EnumDataType(typeof(Role))]
-        public required string Role { get; set; }
+        public string? Role { get; set; }
 
         [Required]
         [EmailAddress]

@@ -382,6 +382,7 @@ namespace OKeeffeCraft.Core.Services
                 var account = _mapper.Map<Account>(model);
                 account.Created = DateTime.UtcNow;
                 account.Verified = DateTime.UtcNow;
+                account.Role = Role.User;
 
                 // Hash password
                 account.PasswordHash = BC.HashPassword(model.Password);
