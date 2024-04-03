@@ -1,9 +1,7 @@
 ﻿using AutoMapper;
 using OKeeffeCraft.Entities;
 using OKeeffeCraft.Models.Accounts;
-using OKeeffeCraft.Models.OpenAI;
-using OpenAI.Threads;
-using OpenAI;
+using OKeeffeCraft.Models.Logs;
 
 namespace OKeeffeCraft.Helpers
 {
@@ -17,6 +15,14 @@ namespace OKeeffeCraft.Helpers
             CreateMap<Account, AuthenticateResponse>();
 
             CreateMap<Account, AccountModel>();
+
+            CreateMap<ErrorLog, ErrorLogModel>();
+
+            CreateMap<ActivityLog, ActivityLogModel>();
+
+            CreateMap<ActivityLogModel, ActivityLog>();
+
+            CreateMap<ErrorLogModel, ErrorLog>();
 
             CreateMap<AccountModel, Account>();
 

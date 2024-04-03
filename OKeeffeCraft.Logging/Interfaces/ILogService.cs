@@ -1,5 +1,5 @@
-﻿using OKeeffeCraft.Entities;
-using OKeeffeCraft.Models;
+﻿using OKeeffeCraft.Models;
+using OKeeffeCraft.Models.Logs;
 
 namespace OKeeffeCraft.Core.Interfaces
 {
@@ -7,9 +7,9 @@ namespace OKeeffeCraft.Core.Interfaces
     {
         Task ActivityLog(string message, string? identifierType, string? identifier);
         Task ErrorLog(string message, string? stackTrace, string? identifierType, string? identifier);
-        Task<ServiceResponse<IEnumerable<ActivityLog>>> GetActivityLogs();
-        Task<ServiceResponse<IEnumerable<ErrorLog>>> GetErrorLogs();
-        Task<ServiceResponse<ActivityLog>> GetActivityLogById(string id);
-        Task<ServiceResponse<ErrorLog>> GetErrorLogById(string id);
+        Task<ServiceResponse<IEnumerable<ActivityLogModel>>> GetActivityLogs();
+        Task<ServiceResponse<IEnumerable<ErrorLogModel>>> GetErrorLogs();
+        Task<ServiceResponse<ActivityLogModel>> GetActivityLogById(string id);
+        Task<ServiceResponse<ErrorLogModel>> GetErrorLogById(string id);
     }
 }

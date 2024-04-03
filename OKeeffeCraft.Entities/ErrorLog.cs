@@ -7,7 +7,7 @@ namespace OKeeffeCraft.Entities
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string Id { get; set; }
+        public string? Id { get; set; }
 
         [BsonElement("LogDate")]
         public DateTime? LogDate { get; set; }

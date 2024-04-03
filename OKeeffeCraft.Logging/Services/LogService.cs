@@ -1,18 +1,21 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
 using OKeeffeCraft.Core.Interfaces;
 using OKeeffeCraft.Entities;
 using OKeeffeCraft.Helpers;
 using OKeeffeCraft.Models;
+using OKeeffeCraft.Models.Logs;
 
 namespace OKeeffeCraft.Core.Services
 {
     public class LogService : ILogService
     {
         private readonly IMongoDBService _context;
+        private readonly IMapper _mapper;
 
-        public LogService(IMongoDBService context)
+        public LogService(IMongoDBService context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         /// <summary>
@@ -43,7 +46,7 @@ namespace OKeeffeCraft.Core.Services
         /// <summary>
         /// Method to asynchronously retrieve activity logs from the database
         /// </summary>
-        public async Task<ServiceResponse<IEnumerable<ActivityLog>>> GetActivityLogs()
+        public async Task<ServiceResponse<IEnumerable<ActivityLogModel>>> GetActivityLogs()
         {
             try
             {
@@ -54,13 +57,15 @@ namespace OKeeffeCraft.Core.Services
                 if (logs == null || logs.Count == 0)
                     throw new AppException("No activity logs found");
 
+                var activityLogs = _mapper.Map<IEnumerable<ActivityLogModel>>(logs);
+
                 // Return a successful response with the retrieved logs
-                return new ServiceResponse<IEnumerable<ActivityLog>> { Success = true, Message = "Success, activity logs found", Data = logs };
+                return new ServiceResponse<IEnumerable<ActivityLogModel>> { Success = true, Message = "Success, activity logs found", Data = activityLogs };
             }
             catch (Exception ex)
             {
                 await ErrorLog(ex.Message, ex.StackTrace, "LogService", "GetActivityLogs");
-                return new ServiceResponse<IEnumerable<ActivityLog>> { Success = false, Message = ex.Message, Data = null };
+                return new ServiceResponse<IEnumerable<ActivityLogModel>> { Success = false, Message = ex.Message, Data = null };
 
             }
         }
@@ -68,7 +73,7 @@ namespace OKeeffeCraft.Core.Services
         /// <summary>
         /// Method to asynchronously retrieve error logs from the database
         /// </summary>
-        public async Task<ServiceResponse<IEnumerable<ErrorLog>>> GetErrorLogs()
+        public async Task<ServiceResponse<IEnumerable<ErrorLogModel>>> GetErrorLogs()
         {
             try {
             // Retrieve error logs from the database asynchronously
@@ -78,13 +83,15 @@ namespace OKeeffeCraft.Core.Services
             if (logs == null || logs.Count == 0)
                 throw new AppException("No error logs found");
 
+            var errorLogs = _mapper.Map<IEnumerable<ErrorLogModel>>(logs);
+
             // Return a successful response with the retrieved logs
-            return new ServiceResponse<IEnumerable<ErrorLog>> { Success = true, Message = "Success, error logs found", Data = logs };
+            return new ServiceResponse<IEnumerable<ErrorLogModel>> { Success = true, Message = "Success, error logs found", Data = errorLogs };
                 }
             catch (Exception ex)
             {
                 await ErrorLog(ex.Message, ex.StackTrace, "LogService", "GetErrorLogs");
-                return new ServiceResponse<IEnumerable<ErrorLog>> { Success = false, Message = ex.Message, Data = null };
+                return new ServiceResponse<IEnumerable<ErrorLogModel>> { Success = false, Message = ex.Message, Data = null };
             }
         }
 
@@ -92,7 +99,7 @@ namespace OKeeffeCraft.Core.Services
         /// Method to asynchronously retrieve an activity log by its ID
         /// </summary>
         /// <param name="id">The ID of the activity log to retrieve</param>
-        public async Task<ServiceResponse<ActivityLog>> GetActivityLogById(string id)
+        public async Task<ServiceResponse<ActivityLogModel>> GetActivityLogById(string id)
         {
             try
             {
@@ -104,11 +111,11 @@ namespace OKeeffeCraft.Core.Services
                     throw new AppException("No activity log found");
 
                 // Return a successful response with the retrieved activity log
-                return new ServiceResponse<ActivityLog>
+                return new ServiceResponse<ActivityLogModel>
                 {
                     Success = true,
                     Message = "Success, activity log found",
-                    Data = activityLog
+                    Data = _mapper.Map<ActivityLogModel>(activityLog)
                 };
             }
             catch (Exception ex)
@@ -117,7 +124,7 @@ namespace OKeeffeCraft.Core.Services
                 await ErrorLog(ex.Message, ex.StackTrace, "LogService", "GetActivityLogById");
 
                 // Return a response indicating failure along with the error message
-                return new ServiceResponse<ActivityLog>
+                return new ServiceResponse<ActivityLogModel>
                 {
                     Success = false,
                     Message = ex.Message,
@@ -130,7 +137,7 @@ namespace OKeeffeCraft.Core.Services
         /// Method to asynchronously retrieve an error log by its ID
         /// </summary>
         /// <param name="id">The ID of the error log to retrieve</param>
-        public async Task<ServiceResponse<ErrorLog>> GetErrorLogById(string id)
+        public async Task<ServiceResponse<ErrorLogModel>> GetErrorLogById(string id)
         {
             try
             {
@@ -141,12 +148,14 @@ namespace OKeeffeCraft.Core.Services
                 if (errorLog == null)
                     throw new AppException("No error log found");
 
+
+
                 // Return a successful response with the retrieved error log
-                return new ServiceResponse<ErrorLog>
+                return new ServiceResponse<ErrorLogModel>
                 {
                     Success = true,
                     Message = "Success, error log found",
-                    Data = errorLog
+                    Data = _mapper.Map<ErrorLogModel>(errorLog)
                 };
             }
             catch (Exception ex)
@@ -155,7 +164,7 @@ namespace OKeeffeCraft.Core.Services
                 await ErrorLog(ex.Message, ex.StackTrace, "LogService", "GetErrorLogById");
 
                 // Return a response indicating failure along with the error message
-                return new ServiceResponse<ErrorLog>
+                return new ServiceResponse<ErrorLogModel>
                 {
                     Success = false,
                     Message = ex.Message,

@@ -412,7 +412,7 @@ namespace OKeeffeCraft.Core.Services
                 var account = await GetAccount(id);
 
                 // Validate
-                if (account.Email != model.Email && await _context.GetAccountByEmailAsync(model.Email)!=null)
+                if (account.Email != model.Email && await _context.GetAccountByEmailAsync(model.Email!)!=null)
                     throw new AppException($"Email '{model.Email}' is already registered");
 
                 // Hash password if it was entered
