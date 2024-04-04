@@ -7,5 +7,6 @@ namespace OKeeffeCraft.Core.Interfaces
         void SendVerificationEmail(Account account);
         void SendAlreadyRegisteredEmail(string email);
         void SendPasswordResetEmail(Account account);
+        void SendTestMail();
     }
 }

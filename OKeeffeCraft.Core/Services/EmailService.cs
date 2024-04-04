@@ -6,6 +6,7 @@ using MimeKit.Text;
 using OKeeffeCraft.Authorization.Interfaces;
 using OKeeffeCraft.Core.Interfaces;
 using OKeeffeCraft.Entities;
+using OKeeffeCraft.ExternalServiceProviders.Interfaces;
 using OKeeffeCraft.Helpers;
 
 
@@ -16,12 +17,19 @@ namespace OKeeffeCraft.Core.Services
         private readonly AppSettings _appSettings;
         private readonly ILogService _logService;
         private readonly IAuthIdentityService _authIdentityService;
+        private readonly IPostmarkEmailServiceProvider _postmarkEmailServiceProvider;
 
         public EmailService(IOptions<AppSettings> appSettings, ILogService logService,
-            IAuthIdentityService identityService)
+            IAuthIdentityService identityService, IPostmarkEmailServiceProvider postmarkEmailServiceProvider)
         {
             _appSettings = appSettings.Value; _logService = logService;
             _authIdentityService = identityService;
+            _postmarkEmailServiceProvider = postmarkEmailServiceProvider;
+        }
+
+        public async void SendTestMail()
+        {
+            await _postmarkEmailServiceProvider.SendTestMail();
         }
 
         /// <summary>

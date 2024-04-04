@@ -8,7 +8,6 @@
         public required string AMLAssistantId { get; set; }
         public required string MongoDBName { get; set; }
 
-
         // refresh token time to live (in days), inactive tokens are
         // automatically deleted from the database after this time
         public int RefreshTokenTTL { get; set; }
@@ -18,5 +17,8 @@
         public required string SmtpUser { get; set; }
         public required string SmtpPass { get; set; }
         public required MailSettings MailSettings { get; set; }
+        public required string SupportEmailAddress { get; set; }
+        public required string PostmarkServerApiKey { get; set; }
+        public required string EmailDeliveryWebhookToken { get; set; }
     }
 }

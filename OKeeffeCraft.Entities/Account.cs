@@ -7,7 +7,7 @@ namespace OKeeffeCraft.Entities
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string Id { get; set; }
+        public required string Id { get; set; }
 
         [BsonElement("FullName")]
         public required string FullName { get; set; }

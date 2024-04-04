@@ -55,6 +55,7 @@ services.AddScoped<ILogService, LogService>();
 services.AddScoped<IChatGptService, ChatGptService>();
 services.AddScoped<IAMLAssistantService, AMLAssistantService>();
 services.AddScoped<IMongoDBService, MongoDBService>();
+services.AddScoped<IPostmarkEmailServiceProvider, PostmarkEmailServiceProvider>();
 
 // configure DI for external services transients
 services.AddTransient<IAuthIdentityService, AuthIdentityService>();
