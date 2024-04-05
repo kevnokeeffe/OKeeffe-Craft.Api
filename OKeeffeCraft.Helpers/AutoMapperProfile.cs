@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using OKeeffeCraft.Entities;
 using OKeeffeCraft.Models.Accounts;
+using OKeeffeCraft.Models.Email;
 using OKeeffeCraft.Models.Logs;
 
 namespace OKeeffeCraft.Helpers
@@ -16,6 +17,8 @@ namespace OKeeffeCraft.Helpers
 
             CreateMap<Account, AccountModel>();
 
+            CreateMap<Email, EmailModel>();
+
             CreateMap<ErrorLog, ErrorLogModel>();
 
             CreateMap<ActivityLog, ActivityLogModel>();
@@ -25,6 +28,8 @@ namespace OKeeffeCraft.Helpers
             CreateMap<ErrorLogModel, ErrorLog>();
 
             CreateMap<AccountModel, Account>();
+
+            CreateMap<EmailModel, Email>();
 
             CreateMap<RegisterRequest, Account>();
 

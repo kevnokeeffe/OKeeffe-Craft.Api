@@ -1,11 +1,11 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using OKeeffeCraft.Entities;
 using OKeeffeCraft.ExternalServiceProviders.Interfaces;
 using OKeeffeCraft.Helpers;
 using OKeeffeCraft.Models.Email;
 using PostmarkDotNet;
 using PostmarkDotNet.Exceptions;
-using PostmarkDotNet.Model;
 using System.Text.Json;
 
 namespace OKeeffeCraft.ExternalServiceProviders.Services
@@ -13,10 +13,12 @@ namespace OKeeffeCraft.ExternalServiceProviders.Services
     public class PostmarkEmailServiceProvider : IPostmarkEmailServiceProvider
     {
         private readonly AppSettings _appSettings;
+        private readonly IConfiguration _configuration;
 
-        public PostmarkEmailServiceProvider(IOptions<AppSettings> appSettings)
+        public PostmarkEmailServiceProvider(IOptions<AppSettings> appSettings, IConfiguration configuration )
         {
             _appSettings = appSettings.Value;
+            _configuration = configuration;
         }
 
         public async Task<string> SendMail(NewEmailModel message)
@@ -38,7 +40,7 @@ namespace OKeeffeCraft.ExternalServiceProviders.Services
                 Tag = message.ToName,
 
             };
-            var client = new PostmarkClient(_appSettings.PostmarkServerApiKey);
+            var client = new PostmarkClient(_configuration["PostmarkServerApiKey"]);
 
             try
             {

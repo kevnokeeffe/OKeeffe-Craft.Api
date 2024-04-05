@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using OKeeffeCraft.Core.Interfaces;
 using OKeeffeCraft.Entities;
 using OKeeffeCraft.ExternalServiceProviders.Interfaces;
 using OKeeffeCraft.Helpers;
+using OKeeffeCraft.Models;
 using OKeeffeCraft.Models.Email;
 using System.Text;
 
@@ -18,29 +20,51 @@ namespace OKeeffeCraft.Core.Services
         private readonly IMongoDBService _context;
         private readonly ILogService _logService;
         private readonly AppSettings _appSettings;
+        private readonly IConfiguration _configuration;
 
 
-        public EmailService(IPostmarkEmailServiceProvider mailer, IOptions<AppSettings> appSettings, IMapper mapper, IMongoDBService context, ILogService logService)
+        public EmailService(IPostmarkEmailServiceProvider mailer, IOptions<AppSettings> appSettings, IMapper mapper, IMongoDBService context, ILogService logService, IConfiguration configuration)
         {
             _mailer = mailer;
             _mapper = mapper;
             _context = context;
             _logService = logService;
             _appSettings = appSettings.Value;
+            _configuration = configuration; 
+        }
+
+        public async Task<ServiceResponse<IEnumerable<EmailModel>>> getEmails()
+        {
+            var emails = await _context.GetEmailsAsync();
+            var response = new ServiceResponse<IEnumerable<EmailModel>>();
+            response.Data = _mapper.Map<IEnumerable<EmailModel>>(emails);
+            response.Message = "Emails retrieved successfully";
+            response.Success = true;
+            return response;
+        }
+
+        public async Task<ServiceResponse<EmailModel>> getEmailById(string id)
+        {
+            var email = await _context.GetEmailAsync(id);
+            var response = new ServiceResponse<EmailModel>();
+            response.Data = _mapper.Map<EmailModel>(email);
+            response.Message = "Email retrieved successfully";
+            response.Success = true;
+            return response;
         }
 
         public async Task SendConfirmEmailMessage(ConfirmEmailModel model)
         {
-            var subject = "Confirm your email address for Infinity Role";
+            var subject = "Confirm your email address for KevOKeeffe.ie";
 
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine("Thanks for registering with Infinity Role. Please click on the following link to confirm your email address:");
+            sb.AppendLine("Thanks for registering with KevOKeeffe.ie. Please click on the following link to confirm your email address:");
             sb.AppendLine();
-            sb.AppendLine($"{_appSettings.ClientUrl}/verify-email/{model.AccessToken}");
+            sb.AppendLine($"{_appSettings.ClientUrl}/verify-email?token={model.AccessToken}");
             sb.AppendLine();
             sb.AppendLine();
             sb.AppendLine("Regards");
-            sb.AppendLine("Infinity Role Team");
+            sb.AppendLine("Kevin O'Keeffe");
 
             NewEmailModel message = new NewEmailModel
             {
@@ -56,16 +80,16 @@ namespace OKeeffeCraft.Core.Services
 
         public async Task SendPasswordResetEmail(Account account)
         {
-            var subject = "Reset your password for Infinity Role ";
+            var subject = "Reset your password for KevOKeeffe.ie";
 
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("Please click the below link to reset your password, the link will be valid for 1 day:");
             sb.AppendLine();
-            sb.AppendLine($"{_appSettings.ClientUrl}/reset-password/{account.ResetToken}");
+            sb.AppendLine($"{_appSettings.ClientUrl}/reset-password?token={account.ResetToken}");
             sb.AppendLine();
             sb.AppendLine();
             sb.AppendLine("Regards");
-            sb.AppendLine("Infinity Role Team");
+            sb.AppendLine("Kevin O'Keeffe");
 
             NewEmailModel message = new NewEmailModel
             {
@@ -103,7 +127,7 @@ namespace OKeeffeCraft.Core.Services
         public async Task ProcessCallback(string body, string token)
         {
             //check token first
-            if (token != _appSettings.EmailDeliveryWebhookToken)
+            if (token != _configuration["EmailDeliveryWebhookToken"])
                 return;
             try
             {
