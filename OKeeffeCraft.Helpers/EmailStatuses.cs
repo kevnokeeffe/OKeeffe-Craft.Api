@@ -10,6 +10,8 @@ namespace OKeeffeCraft.Helpers
         public const string Sent = "sent";
         public const string Delivered = "delivered";
         public const string Failed = "failed";
+        public const string Opened = "opened";
+        public const string Clicked = "clicked";
 
 
         static EmailStatuses()

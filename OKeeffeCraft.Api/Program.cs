@@ -26,7 +26,7 @@ services.AddCors(options =>
     options.AddPolicy(name: MyAllowSpecificOrigins,
                       policy =>
                       {
-                          policy.WithOrigins("https://kevokeeffe.ie", "http://localhost:4200", "https://www.kevokeeffe.ie")
+                          policy.WithOrigins("https://kevokeeffe.ie", "http://localhost:4200", "https://www.kevokeeffe.ie", "https://postmarkapp.com", "https://api.postmarkapp.com")
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials();

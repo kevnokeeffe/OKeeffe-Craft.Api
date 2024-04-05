@@ -41,7 +41,7 @@ namespace OKeeffeCraft.Api.Controllers
             return Ok();
         }
 
-        [HttpGet("emails")]
+        [HttpGet()]
         [SwaggerOperation(Summary = "Get all emails")]
         [SwaggerResponse(200, "List if all emails", typeof(ServiceResponse<IEnumerable<EmailModel>>))]
         [SwaggerResponse(400, "Error message (generally a validation error", typeof(ServiceResponse<string>))]
@@ -51,7 +51,7 @@ namespace OKeeffeCraft.Api.Controllers
             return Ok(response);
         }
 
-        [HttpGet("email{id}")]
+        [HttpGet("{id}")]
         [SwaggerOperation(Summary = "Get email by id")]
         [SwaggerResponse(200, "Email by id", typeof(ServiceResponse<EmailModel>))]
         [SwaggerResponse(400, "Error message (generally a validation error", typeof(ServiceResponse<string>))]

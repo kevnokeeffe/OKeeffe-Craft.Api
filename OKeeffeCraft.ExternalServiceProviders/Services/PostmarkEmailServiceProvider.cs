@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using OKeeffeCraft.Core.Interfaces;
 using OKeeffeCraft.Entities;
 using OKeeffeCraft.ExternalServiceProviders.Interfaces;
 using OKeeffeCraft.Helpers;
@@ -14,11 +15,13 @@ namespace OKeeffeCraft.ExternalServiceProviders.Services
     {
         private readonly AppSettings _appSettings;
         private readonly IConfiguration _configuration;
+        private readonly ILogService _logService;
 
-        public PostmarkEmailServiceProvider(IOptions<AppSettings> appSettings, IConfiguration configuration )
+        public PostmarkEmailServiceProvider(IOptions<AppSettings> appSettings, IConfiguration configuration, ILogService logService )
         {
             _appSettings = appSettings.Value;
             _configuration = configuration;
+            _logService = logService;
         }
 
         public async Task<string> SendMail(NewEmailModel message)
@@ -66,14 +69,32 @@ namespace OKeeffeCraft.ExternalServiceProviders.Services
             {
                 response.Status = EmailStatuses.Delivered;
                 response.ExternalRef = deliveryEvents.MessageID;
+                _logService.ActivityLog(deliveryEvents.MessageID, response.Status, response.ExternalRef);
                 return response;
             }
 
-            if (deliveryEvents.RecordType == "Bounce" || deliveryEvents.RecordType == "Dropped" || deliveryEvents.RecordType == "SpamComplaint" || deliveryEvents.RecordType == "Open" || deliveryEvents.RecordType == "Click" || deliveryEvents.RecordType == "SpamComplaint")
+            if(deliveryEvents.RecordType == "Open")
+            {
+                response.Status = EmailStatuses.Opened;
+                response.ExternalRef = deliveryEvents.MessageID;
+                _logService.ActivityLog(deliveryEvents.MessageID, response.Status, response.ExternalRef);
+                return response;
+            }
+
+            if(deliveryEvents.RecordType == "Click")
+            {
+                response.Status = EmailStatuses.Clicked;
+                response.ExternalRef = deliveryEvents.MessageID;
+                _logService.ActivityLog(deliveryEvents.MessageID, response.Status, response.ExternalRef);
+                return response;
+            }
+
+            if (deliveryEvents.RecordType == "Bounce" || deliveryEvents.RecordType == "Dropped" || deliveryEvents.RecordType == "SpamComplaint"  || deliveryEvents.RecordType == "SpamComplaint")
             {
                 response.Status = EmailStatuses.Failed;
                 response.ExternalRef = deliveryEvents.MessageID;
                 response.DeliveryMessage = $"{deliveryEvents.Description}";
+                _logService.ErrorLog(deliveryEvents.MessageID, response.Status, response.ExternalRef, response.DeliveryMessage);
                 return response;
             }
 
