@@ -8,7 +8,7 @@ namespace OKeeffeCraft.Entities
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public required string Id { get; set; }
+        public string? Id { get; set; }
 
         [BsonElement("EmailDate")]
         public DateTime EmailDate { get; set; }
@@ -32,8 +32,8 @@ namespace OKeeffeCraft.Entities
         public required string Body { get; set; }
 
         [MaxLength(40)]
-        [BsonElement("Username")]
-        public required string Username { get; set; }
+        [BsonElement("AccountId")]
+        public required string AccountId { get; set; }
 
         [BsonElement("SentDate")]
         public DateTime? SentDate { get; set; }
@@ -42,10 +42,10 @@ namespace OKeeffeCraft.Entities
         public DateTime? LastSentDate { get; set; }
 
         [BsonElement("DeliveryMessage")]
-        public required string DeliveryMessage { get; set; }
+        public string? DeliveryMessage { get; set; }
 
         [BsonElement("ExternalRef")]
-        public required string ExternalRef { get; set; }
+        public string? ExternalRef { get; set; }
 
         [BsonElement("Status")]
         public string? Status { get; set; }

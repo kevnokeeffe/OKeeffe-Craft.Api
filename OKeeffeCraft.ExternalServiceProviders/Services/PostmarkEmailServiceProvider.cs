@@ -67,7 +67,7 @@ namespace OKeeffeCraft.ExternalServiceProviders.Services
                 return response;
             }
 
-            if (deliveryEvents.RecordType == "Bounce" || deliveryEvents.RecordType == "Dropped" || deliveryEvents.RecordType == "SpamComplaint")
+            if (deliveryEvents.RecordType == "Bounce" || deliveryEvents.RecordType == "Dropped" || deliveryEvents.RecordType == "SpamComplaint" || deliveryEvents.RecordType == "Open" || deliveryEvents.RecordType == "Click" || deliveryEvents.RecordType == "SpamComplaint")
             {
                 response.Status = EmailStatuses.Failed;
                 response.ExternalRef = deliveryEvents.MessageID;
@@ -76,32 +76,6 @@ namespace OKeeffeCraft.ExternalServiceProviders.Services
             }
 
             return new EmailDeliveryInfo();
-        }
-
-        public async Task SendTestMail()
-        {
-            var message = new PostmarkMessage()
-            {
-                To = "admin@kevokeeffe.ie",
-                From = "admin@kevokeeffe.ie",
-                TrackOpens = true,
-                Subject = "A complex email",
-                TextBody = "Hello dear Postmark user.",
-                HtmlBody = "<strong>Hello</strong> dear Postmark user. <img src='cid:embed_name.jpg'/>",
-                MessageStream = "outbound",
-                Tag = "New Year's Email Campaign",
-            };
-
-            // message.Headers.Add("X-CUSTOM-HEADER", "Header content");
-
-            //var imageContent = File.ReadAllBytes("test.jpg");
-            //message.AddAttachment(imageContent, "test.jpg", "image/jpg", "cid:embed_name.jpg");
-
-            var client = new PostmarkClient("d363b1f0-5a4a-4ba8-b97f-9b6693043f1f");
-            var sendResult = await client.SendMessageAsync(message);
-
-            if (sendResult.Status == PostmarkStatus.Success) { /* Handle success */ }
-            else { /* Resolve issue.*/ }
         }
     }
 }

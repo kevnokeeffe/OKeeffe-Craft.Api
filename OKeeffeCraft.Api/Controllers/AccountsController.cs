@@ -5,6 +5,7 @@ using OKeeffeCraft.Entities;
 using OKeeffeCraft.Models;
 using OKeeffeCraft.Models.Accounts;
 using Swashbuckle.AspNetCore.Annotations;
+using System.Text;
 
 namespace OKeeffeCraft.Api.Controllers
 {
@@ -14,10 +15,31 @@ namespace OKeeffeCraft.Api.Controllers
     public class AccountsController : BaseController
     {
         private readonly IAccountService _accountService;
+        private readonly IEmailService _emailService;
 
-        public AccountsController(IAccountService accountService)
+        public AccountsController(IAccountService accountService, IEmailService emailService)
         {
             _accountService = accountService;
+            _emailService = emailService;
+        }
+
+        [AllowAnonymous]
+        [HttpPost("email/delivery-event/{token}")]
+        [SwaggerOperation(Summary = "URL to be called by Email Provider to notify of email delivery")]
+        [SwaggerResponse(200, "Notification received and processed")]
+        public async Task<IActionResult> EmailDelivery(string token)
+        {
+            string body;
+            //parse request body for email delivery message
+            using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
+            {
+                body = await reader.ReadToEndAsync();
+            }
+
+            if (!string.IsNullOrEmpty(body))
+                await _emailService.ProcessCallback(body, token);
+
+            return Ok();
         }
 
         [AllowAnonymous]

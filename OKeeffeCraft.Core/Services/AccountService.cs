@@ -7,6 +7,7 @@ using OKeeffeCraft.Entities;
 using OKeeffeCraft.Helpers;
 using OKeeffeCraft.Models;
 using OKeeffeCraft.Models.Accounts;
+using OKeeffeCraft.Models.Email;
 using System.Security.Cryptography;
 using BC = BCrypt.Net.BCrypt;
 
@@ -189,8 +190,6 @@ namespace OKeeffeCraft.Core.Services
                 // Validate
                 if (await _context.GetAccountByEmailAsync(model.Email)!=null)
                 {
-                    // Send already registered error in email to prevent account enumeration
-                    _emailService.SendAlreadyRegisteredEmail(model.Email);
                     return new ServiceResponse<AccountResponse> { Data = null, Message = "Email address already registered.", Success = false };
                 }
 
@@ -208,9 +207,15 @@ namespace OKeeffeCraft.Core.Services
 
                 // Save account
                 await _context.CreateAccountAsync(account);
-
+                ConfirmEmailModel email = new ConfirmEmailModel
+                {
+                    AccountId = account.Id,
+                    Email = account.Email,
+                    Name = account.FullName,
+                    AccessToken = account.VerificationToken     
+                };
                 // Send email
-                _emailService.SendVerificationEmail(account);
+                await _emailService.SendConfirmEmailMessage(email);
                 await _logService.ActivityLog("User registered successfully", "Email", account.Email);
                 return new ServiceResponse<AccountResponse> { Data = _mapper.Map<AccountResponse>(account), Message = "Registration successful, please check your email for verification instructions.", Success = true };
             }
@@ -271,7 +276,7 @@ namespace OKeeffeCraft.Core.Services
                 await _context.UpdateAccountAsync(account.Id, account);
 
                 // Send email
-                _emailService.SendPasswordResetEmail(account);
+                await _emailService.SendPasswordResetEmail(account);
                 return new ServiceResponse<string> { Data = null, Message = "Please check your email for password reset instructions", Success = true };
             }
             catch (Exception error)

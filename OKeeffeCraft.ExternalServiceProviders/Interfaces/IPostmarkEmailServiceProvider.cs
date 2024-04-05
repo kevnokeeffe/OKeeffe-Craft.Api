@@ -8,6 +8,5 @@ namespace OKeeffeCraft.ExternalServiceProviders.Interfaces
     {
         EmailDeliveryInfo ProcessCallback(string body);
         Task<string> SendMail(NewEmailModel message);
-        Task SendTestMail();
     }
 }

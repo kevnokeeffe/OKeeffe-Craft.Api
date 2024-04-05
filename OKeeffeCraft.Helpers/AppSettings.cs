@@ -20,5 +20,6 @@
         public required string SupportEmailAddress { get; set; }
         public required string PostmarkServerApiKey { get; set; }
         public required string EmailDeliveryWebhookToken { get; set; }
+        public required bool ArchiveEmails { get; set; }
     }
 }

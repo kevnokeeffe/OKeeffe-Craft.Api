@@ -11,6 +11,7 @@ namespace OKeeffeCraft.Core.Services
         private readonly IMongoCollection<ActivityLog> _activityLogCollection;
         private readonly IMongoCollection<ErrorLog> _errorLogCollection;
         private readonly IMongoCollection<RefreshToken> _refreshTokenCollection;
+        private readonly IMongoCollection<Email> _emailCollection;
 
         private readonly MongoDataContext _context;
 
@@ -21,8 +22,39 @@ namespace OKeeffeCraft.Core.Services
             _activityLogCollection = _context.db.GetCollection<ActivityLog>("ActivityLogs");
             _errorLogCollection = _context.db.GetCollection<ErrorLog>("ErrorLogs");
             _refreshTokenCollection = _context.db.GetCollection<RefreshToken>("RefreshTokens");
+            _emailCollection = _context.db.GetCollection<Email>("Email");
         }
 
+        #region Email
+        public async Task<List<Email>> GetEmailsAsync() =>
+            await _emailCollection.Find(_ => true).ToListAsync();
+
+        public async Task<Email?> GetEmailAsync(string id) =>
+            await _emailCollection.Find(x => x.Id == id).FirstOrDefaultAsync();
+
+        public async Task CreateEmailAsync(Email newEmail) =>
+            await _emailCollection.InsertOneAsync(newEmail);
+
+        public async Task UpdateEmailAsync(string id, Email updatedEmail) =>
+            await _emailCollection.ReplaceOneAsync(x => x.Id == id, updatedEmail);
+
+        public async Task RemoveEmailAsync(string id) =>
+            await _emailCollection.DeleteOneAsync(x => x.Id == id);
+
+        public async Task<List<Email>> GetEmailsByAccountIdAsync(string accountId) =>
+            await _emailCollection.Find(x => x.AccountId == accountId).ToListAsync();
+
+        public async Task<List<Email>> GetEmailsByExternalRefAsync(string externalRef) =>
+            await _emailCollection.Find(x => x.ExternalRef == externalRef).ToListAsync();
+
+        public async Task<Email> GetEmailByExternalRefAsync(string externalRef) =>
+          await _emailCollection.Find(x => x.ExternalRef == externalRef).FirstOrDefaultAsync();
+
+        public async Task<List<Email>> GetEmailsByStatusAsync(string status) =>
+            await _emailCollection.Find(x => x.Status == status).ToListAsync();
+        #endregion
+
+        #region Account
 
         public async Task<List<Account>> GetAccountsAsync() =>
         await _accountCollection.Find(_ => true).ToListAsync();
@@ -58,6 +90,9 @@ namespace OKeeffeCraft.Core.Services
 
         public async Task RemoveAccountAsync(string id) =>
             await _accountCollection.DeleteOneAsync(x => x.Id == id);
+        #endregion
+
+        #region ActivityLog
 
         public async Task<List<ActivityLog>> GetActivityLogsAsync() =>
             await _activityLogCollection.Find(_ => true).ToListAsync();
@@ -73,7 +108,9 @@ namespace OKeeffeCraft.Core.Services
 
         public async Task RemoveActivityLogAsync(string id) =>
             await _activityLogCollection.DeleteOneAsync(x => x.Id == id);
+        #endregion
 
+        #region ErrorLog
         public async Task<List<ErrorLog>> GetErrorLogsAsync() =>
             await _errorLogCollection.Find(_ => true).ToListAsync();
 
@@ -88,6 +125,9 @@ namespace OKeeffeCraft.Core.Services
 
         public async Task RemoveErrorLogAsync(string id) =>
             await _errorLogCollection.DeleteOneAsync(x => x.Id == id);
+        #endregion
+
+        #region RefreshToken
 
         public async Task<List<RefreshToken>> GetRefreshTokensAsync() =>
             await _refreshTokenCollection.Find(_ => true).ToListAsync();
@@ -110,6 +150,8 @@ namespace OKeeffeCraft.Core.Services
 
         public async Task RemoveRefreshTokenByTokenAsync(string token) =>
             await _refreshTokenCollection.DeleteOneAsync(x => x.Token == token);
+
+        #endregion
 
     }
 }

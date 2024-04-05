@@ -1,12 +1,13 @@
 ﻿using OKeeffeCraft.Entities;
+using OKeeffeCraft.Models.Email;
 
 namespace OKeeffeCraft.Core.Interfaces
 {
     public interface IEmailService 
     {
-        void SendVerificationEmail(Account account);
-        void SendAlreadyRegisteredEmail(string email);
-        void SendPasswordResetEmail(Account account);
-        void SendTestMail();
+        Task SendConfirmEmailMessage(ConfirmEmailModel model);
+        Task ValidateAndSendMail(NewEmailModel message);
+        Task SendPasswordResetEmail(Account account);
+        Task ProcessCallback(string body, string token);
     }
 }

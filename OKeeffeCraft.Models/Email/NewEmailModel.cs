@@ -20,13 +20,13 @@ namespace OKeeffeCraft.Models.Email
         public required string Subject { get; set; }
 
         [SwaggerSchema("The body of the email.")]
-        public string? Body { get; set; }
-
-        [SwaggerSchema("The username of the user.")]
-        public string? Username { get; set; }
+        public required string Body { get; set; }
 
         [SwaggerSchema("An external reference id link record with external provider records")]
         public string? ExternalRef { get; set; }
+
+        [SwaggerSchema("The id of the user account.")]
+        public required string AccountId { get; set; }
 
     }
 }

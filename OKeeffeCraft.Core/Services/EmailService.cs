@@ -1,156 +1,179 @@
-﻿using MailKit.Net.Smtp;
-using MailKit.Security;
+﻿using AutoMapper;
 using Microsoft.Extensions.Options;
-using MimeKit;
-using MimeKit.Text;
-using OKeeffeCraft.Authorization.Interfaces;
+using Microsoft.IdentityModel.Tokens;
 using OKeeffeCraft.Core.Interfaces;
 using OKeeffeCraft.Entities;
 using OKeeffeCraft.ExternalServiceProviders.Interfaces;
 using OKeeffeCraft.Helpers;
+using OKeeffeCraft.Models.Email;
+using System.Text;
 
 
 namespace OKeeffeCraft.Core.Services
 {
     public class EmailService : IEmailService
     {
-        private readonly AppSettings _appSettings;
+        private readonly IPostmarkEmailServiceProvider _mailer;
+        private readonly IMapper _mapper;
+        private readonly IMongoDBService _context;
         private readonly ILogService _logService;
-        private readonly IAuthIdentityService _authIdentityService;
-        private readonly IPostmarkEmailServiceProvider _postmarkEmailServiceProvider;
+        private readonly AppSettings _appSettings;
 
-        public EmailService(IOptions<AppSettings> appSettings, ILogService logService,
-            IAuthIdentityService identityService, IPostmarkEmailServiceProvider postmarkEmailServiceProvider)
+
+        public EmailService(IPostmarkEmailServiceProvider mailer, IOptions<AppSettings> appSettings, IMapper mapper, IMongoDBService context, ILogService logService)
         {
-            _appSettings = appSettings.Value; _logService = logService;
-            _authIdentityService = identityService;
-            _postmarkEmailServiceProvider = postmarkEmailServiceProvider;
+            _mailer = mailer;
+            _mapper = mapper;
+            _context = context;
+            _logService = logService;
+            _appSettings = appSettings.Value;
         }
 
-        public async void SendTestMail()
+        public async Task SendConfirmEmailMessage(ConfirmEmailModel model)
         {
-            await _postmarkEmailServiceProvider.SendTestMail();
+            var subject = "Confirm your email address for Infinity Role";
+
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("Thanks for registering with Infinity Role. Please click on the following link to confirm your email address:");
+            sb.AppendLine();
+            sb.AppendLine($"{_appSettings.ClientUrl}/verify-email/{model.AccessToken}");
+            sb.AppendLine();
+            sb.AppendLine();
+            sb.AppendLine("Regards");
+            sb.AppendLine("Infinity Role Team");
+
+            NewEmailModel message = new NewEmailModel
+            {
+                ToName = model.Name,
+                ToEmail = model.Email,
+                Subject = subject,
+                Body = sb.ToString(),
+                AccountId = model.AccountId
+            };
+
+            await SendMail(message);
         }
 
-        /// <summary>
-        /// Sends a verification email to the specified account for email address verification.
-        /// </summary>
-        /// <param name="account">The account for which the verification email is being sent.</param>
-        /// <param name="origin">The origin URL for the verification link (optional).</param>
-        public async void SendVerificationEmail(Account account)
+        public async Task SendPasswordResetEmail(Account account)
         {
+            var subject = "Reset your password for Infinity Role ";
+
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("Please click the below link to reset your password, the link will be valid for 1 day:");
+            sb.AppendLine();
+            sb.AppendLine($"{_appSettings.ClientUrl}/reset-password/{account.ResetToken}");
+            sb.AppendLine();
+            sb.AppendLine();
+            sb.AppendLine("Regards");
+            sb.AppendLine("Infinity Role Team");
+
+            NewEmailModel message = new NewEmailModel
+            {
+                ToName = account.FullName,
+                ToEmail = account.Email,
+                Subject = subject,
+                Body = sb.ToString(),
+                AccountId = account.Id
+            };
+
+            await SendMail(message);
+        }
+
+        public async Task ValidateAndSendMail(NewEmailModel message)
+        {
+
+            if (message == null)
+                throw new Exception("No email message provided");
+
+            if (message.Body.IsNullOrEmpty() || message.Subject.IsNullOrEmpty() || message.ToEmail.IsNullOrEmpty())
+                throw new Exception("ToEmail ,Body and Subject must be provided");
+
+            if (message.ToEmail.IsValidEmail())
+                throw new Exception("Invalid ToEmail address provided");
+
+            if (!message.AccountId.IsNullOrEmpty())
+            {
+                var result = await _context.GetAccountByIdAsync(message.AccountId);
+                if (result == null)
+                    throw new Exception("Invalid ID provided");
+            }
+            await SendMail(message);
+        }
+
+        public async Task ProcessCallback(string body, string token)
+        {
+            //check token first
+            if (token != _appSettings.EmailDeliveryWebhookToken)
+                return;
             try
             {
-                string message;
-
-                    // Origin exists if the request is sent from a browser single page app (e.g., Angular or React)
-                    // So send a link to verify via the single page app
-                    var verifyUrl = $"{_appSettings.ClientUrl}/verify-email?token={account.VerificationToken}";
-                    message = $@"<p>Please click the below link to verify your email address:</p>
-                    <p><a href=""{verifyUrl}"">{verifyUrl}</a></p>";
-
-                Send(
-                    to: account.Email,
-                    subject: "Sign-up Verification API - Verify Email",
-                    html: $@"<h4>Verify Email</h4>
-                <p>Thanks for registering!</p>
-                
-                {message}"
-                );
+                //call provider to parse callback
+                EmailDeliveryInfo? result = _mailer.ProcessCallback(body);
+                //update email record
+                if (result != null && result.ExternalRef != null && !result.ExternalRef.IsNullOrEmpty())
+                {
+                    var emailResult = await _context.GetEmailByExternalRefAsync(result.ExternalRef);
+                    if (emailResult != null && emailResult.Id != null)
+                    {
+                        emailResult.Status = result.Status;
+                        emailResult.DeliveryMessage = result.DeliveryMessage;
+                        await _context.UpdateEmailAsync(emailResult.Id, emailResult);
+                    }
+                    // Log the activity
+                    await _logService.ActivityLog(ActivityLogTypes.ProcessCallback, ActivityLogTypes.GetDescription(ActivityLogTypes.ProcessCallback) + $", Process callback delivery message: {result.DeliveryMessage}", null);
+                }
             }
-            catch (Exception error)
+            catch (Exception ex)
             {
-                await _logService.ErrorLog(error.Message, error.StackTrace, "Account id", account.Id.ToString());
+                //Log error
+                await _logService.ErrorLog(ErrorLogTypes.ProcessCallback, ex.Message, ex.StackTrace, "Process callback error");
+                throw new Exception("POSTMARK PROCESS CALLBACK ERROR: " + ex.Message);
             }
         }
 
-        /// <summary>
-        /// Sends an email informing the user that the provided email is already registered.
-        /// </summary>
-        /// <param name="email">The email address that is already registered.</param>
-        /// <param name="origin">The origin URL for additional actions (optional).</param>
-        public async void SendAlreadyRegisteredEmail(string email)
+
+        #region private support methods
+
+        private async Task SendMail(NewEmailModel message)
         {
+            var email = new Email
+            {
+                Body = message.Body,
+                EmailDate = DateTime.UtcNow,
+                Subject = message.Subject,
+                ToEmail = message.ToEmail,
+                ToName = message.ToName,
+                AccountId = message.AccountId,
+                Status = EmailStatuses.Pending,
+            };
+
             try
             {
-                string message;
+                //call provider to send email
+                var messageId = email.ExternalRef = await _mailer.SendMail(message);
+                email.Status = EmailStatuses.Sent;
+                email.SentDate = DateTime.UtcNow;
 
-                    message = $@"<p>If you don't know your password please visit the <a href=""{_appSettings.ClientUrl}/account/forgot-password"">forgot password</a> page.</p>";
-               
+                // Log activity
+                await _logService.ActivityLog(ActivityLogTypes.EmailSent, ActivityLogTypes.GetDescription(ActivityLogTypes.EmailSent) + $" Email id: {messageId}, Email subject: {message.Subject}", message.AccountId);
 
-                Send(
-                    to: email,
-                    subject: "Sign-up Verification API - Email Already Registered",
-                    html: $@"<h4>Email Already Registered</h4>
-                <p>Your email <strong>{email}</strong> is already registered.</p>
-                {message}"
-                );
             }
-            catch (Exception error)
+            catch (Exception ex)
             {
-                await _logService.ErrorLog(error.Message, error.StackTrace,"Email" ,email);
+                // Log error 
+                await _logService.ErrorLog(ErrorLogTypes.SendMail, ex.Message, ex.StackTrace, "Process callback");
+                throw new Exception("POSTMARK SEND MAIL ERROR: " + ex.Message);
+            }
+            finally
+            {
+                if (_appSettings.ArchiveEmails)
+                {
+                    await _context.CreateEmailAsync(email);
+                }
             }
         }
 
-        /// <summary>
-        /// Sends a password reset email to the specified account.
-        /// </summary>
-        /// <param name="account">The account for which the password reset email is being sent.</param>
-        /// <param name="origin">The origin URL for the password reset link (optional).</param>
-        public async void SendPasswordResetEmail(Account account)
-        {
-            try
-            {
-                string message;
-
-                    var resetUrl = $"{_appSettings.ClientUrl}/reset-password?token={account.ResetToken}";
-                    message = $@"<p>Please click the below link to reset your password, the link will be valid for 1 day:</p>
-                    <p><a href=""{resetUrl}"">{resetUrl}</a></p>";
-                
-              
-
-                Send(
-                    to: account.Email,
-                    subject: "Sign-up Verification API - Reset Password",
-                    html: $@"<h4>Reset Password Email</h4>
-                {message}"
-                );
-            }
-            catch (Exception error)
-            {
-                await _logService.ErrorLog(error.Message, error.StackTrace, "Account id", account.Id.ToString());
-            }
-        }
-
-        /// <summary>
-        /// Sends an email using the specified parameters.
-        /// </summary>
-        /// <param name="to">The email address of the recipient.</param>
-        /// <param name="subject">The subject of the email.</param>
-        /// <param name="html">The HTML content of the email.</param>
-        /// <param name="from">The email address of the sender (optional). If not provided, the default sender from the application settings is used.</param>
-        private async void Send(string to, string subject, string html, string? from = null)
-        {
-            try
-            {
-                // create message
-                var email = new MimeMessage();
-                email.From.Add(MailboxAddress.Parse(from ?? _appSettings.EmailFrom));
-                email.To.Add(MailboxAddress.Parse(to));
-                email.Subject = subject;
-                email.Body = new TextPart(TextFormat.Html) { Text = html };
-
-                // send email
-                using var smtp = new SmtpClient();
-                smtp.Connect(_appSettings.SmtpHost, _appSettings.SmtpPort, SecureSocketOptions.StartTls);
-                smtp.Authenticate(_appSettings.SmtpUser, _appSettings.SmtpPass);
-                smtp.Send(email);
-                smtp.Disconnect(true);
-            }
-            catch (Exception error)
-            {
-                await _logService.ErrorLog(error.Message, error.StackTrace, "Account id", _authIdentityService.GetAccountId());
-            }
-        }
+        #endregion
     }
+
 }

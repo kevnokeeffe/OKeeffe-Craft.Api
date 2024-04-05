@@ -58,6 +58,11 @@ namespace OKeeffeCraft.Database
                 database.CreateCollection("Accounts");
             }
 
+            if (!collectionNamesList.Contains("Email"))
+            {
+                database.CreateCollection("Email");
+            }
+
             if (!collectionNamesList.Contains("ActivityLogs"))
             {
                 database.CreateCollection("ActivityLogs");

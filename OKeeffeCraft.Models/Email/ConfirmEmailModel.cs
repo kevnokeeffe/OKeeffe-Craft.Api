@@ -8,13 +8,13 @@ namespace OKeeffeCraft.Models.Email
         public required string Email { get; set; }
 
         [SwaggerSchema("The full name of the user")]
-        public string? Name { get; set; }
+        public required string Name { get; set; }
 
         [SwaggerSchema("The confirmation access token")]
-        public string? AccessToken { get; set; }
+        public required string AccessToken { get; set; }
 
         [SwaggerSchema("The username of the user")]
-        public string? Username { get; set; }
+        public required string AccountId { get; set; }
 
     }
 }
