@@ -343,7 +343,7 @@ namespace OKeeffeCraft.Core.Services
             try
             {
                 var accounts = await _context.GetAccountsAsync();
-                return new ServiceResponse<IEnumerable<AccountResponse>> { Data = _mapper.Map<IList<AccountResponse>>(accounts), Message = "Accounts retrieved successfully", Success = true };
+                return new ServiceResponse<IEnumerable<AccountResponse>> { Data = _mapper.Map<IList<AccountResponse>>(accounts).OrderByDescending(account => account.Created), Message = "Accounts retrieved successfully", Success = true };
             }
             catch (Exception error)
             {

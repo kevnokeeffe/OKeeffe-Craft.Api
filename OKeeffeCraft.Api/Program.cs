@@ -20,7 +20,7 @@ var services = builder.Services;
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 var env = builder.Environment;
 services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
-// services.AddDbContext<DataContext>();
+
 services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins,

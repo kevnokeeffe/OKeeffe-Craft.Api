@@ -8,6 +8,7 @@ using OKeeffeCraft.ExternalServiceProviders.Interfaces;
 using OKeeffeCraft.Helpers;
 using OKeeffeCraft.Models;
 using OKeeffeCraft.Models.Email;
+using System.Linq;
 using System.Text;
 
 
@@ -37,7 +38,7 @@ namespace OKeeffeCraft.Core.Services
         {
             var emails = await _context.GetEmailsAsync();
             var response = new ServiceResponse<IEnumerable<EmailModel>>();
-            response.Data = _mapper.Map<IEnumerable<EmailModel>>(emails);
+            response.Data = _mapper.Map<IEnumerable<EmailModel>>(emails).OrderByDescending(email => email.SentDate);
             response.Message = "Emails retrieved successfully";
             response.Success = true;
             return response;

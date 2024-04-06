@@ -57,7 +57,7 @@ namespace OKeeffeCraft.Core.Services
                 if (logs == null || logs.Count == 0)
                     throw new AppException("No activity logs found");
 
-                var activityLogs = _mapper.Map<IEnumerable<ActivityLogModel>>(logs);
+                var activityLogs = _mapper.Map<IEnumerable<ActivityLogModel>>(logs).OrderByDescending(log => log.LogDate);
 
                 // Return a successful response with the retrieved logs
                 return new ServiceResponse<IEnumerable<ActivityLogModel>> { Success = true, Message = "Success, activity logs found", Data = activityLogs };
@@ -83,7 +83,7 @@ namespace OKeeffeCraft.Core.Services
             if (logs == null || logs.Count == 0)
                 throw new AppException("No error logs found");
 
-            var errorLogs = _mapper.Map<IEnumerable<ErrorLogModel>>(logs);
+            var errorLogs = _mapper.Map<IEnumerable<ErrorLogModel>>(logs).OrderByDescending(log => log.LogDate);
 
             // Return a successful response with the retrieved logs
             return new ServiceResponse<IEnumerable<ErrorLogModel>> { Success = true, Message = "Success, error logs found", Data = errorLogs };
