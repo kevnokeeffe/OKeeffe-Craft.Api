@@ -75,6 +75,10 @@ namespace OKeeffeCraft.Database
             {
                 database.CreateCollection("RefreshTokens");
             }
+            if (!collectionNamesList.Contains("ContactMessages"))
+            {
+                database.CreateCollection("ContactMessages");
+            }
 
             // Add more checks and collection creations as needed
         }

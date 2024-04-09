@@ -472,7 +472,7 @@ namespace OKeeffeCraft.ExternalServiceProviders.Services
             }
         }
 
-        private async Task<RunResponse> CreateRunAsync(ThreadResponse thread, AssistantResponse assistant)
+        private static async Task<RunResponse> CreateRunAsync(ThreadResponse thread, AssistantResponse assistant)
         {
             var run = await thread.CreateRunAsync(assistant);
             return run;

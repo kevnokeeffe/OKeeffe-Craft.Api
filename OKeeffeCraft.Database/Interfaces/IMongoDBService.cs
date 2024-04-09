@@ -4,6 +4,11 @@ namespace OKeeffeCraft.Core.Interfaces
 {
     public interface IMongoDBService
     {
+        Task<List<ContactMessage>> GetContactMessagesAsync();
+        Task<ContactMessage?> GetContactMessageAsync(string id);
+        Task CreateContactMessageAsync(ContactMessage newContactMessage);
+        Task UpdateContactMessageAsync(string id, ContactMessage updatedContactMessage);
+        Task RemoveContactMessageAsync(string id);
         Task<List<Email>> GetEmailsAsync();
         Task<Email?> GetEmailAsync(string id);
         Task CreateEmailAsync(Email newEmail);

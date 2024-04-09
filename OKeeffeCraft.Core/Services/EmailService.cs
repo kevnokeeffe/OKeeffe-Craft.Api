@@ -8,7 +8,6 @@ using OKeeffeCraft.ExternalServiceProviders.Interfaces;
 using OKeeffeCraft.Helpers;
 using OKeeffeCraft.Models;
 using OKeeffeCraft.Models.Email;
-using System.Linq;
 using System.Text;
 
 

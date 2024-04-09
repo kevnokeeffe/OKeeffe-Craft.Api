@@ -53,6 +53,7 @@ services.AddScoped<IAccountService, AccountService>();
 services.AddScoped<IEmailService, EmailService>();
 services.AddScoped<ILogService, LogService>();
 services.AddScoped<IChatGptService, ChatGptService>();
+services.AddScoped<IContactMessageService, ContactMessageService>();
 services.AddScoped<IAMLAssistantService, AMLAssistantService>();
 services.AddScoped<IMongoDBService, MongoDBService>();
 services.AddScoped<IPostmarkEmailServiceProvider, PostmarkEmailServiceProvider>();

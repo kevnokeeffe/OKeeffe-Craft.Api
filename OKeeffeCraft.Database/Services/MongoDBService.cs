@@ -12,6 +12,7 @@ namespace OKeeffeCraft.Core.Services
         private readonly IMongoCollection<ErrorLog> _errorLogCollection;
         private readonly IMongoCollection<RefreshToken> _refreshTokenCollection;
         private readonly IMongoCollection<Email> _emailCollection;
+        private readonly IMongoCollection<ContactMessage> _contactMessageCollection;
 
         private readonly MongoDataContext _context;
 
@@ -23,7 +24,28 @@ namespace OKeeffeCraft.Core.Services
             _errorLogCollection = _context.db.GetCollection<ErrorLog>("ErrorLogs");
             _refreshTokenCollection = _context.db.GetCollection<RefreshToken>("RefreshTokens");
             _emailCollection = _context.db.GetCollection<Email>("Email");
+            _contactMessageCollection = _context.db.GetCollection<ContactMessage>("ContactMessages");
         }
+
+        #region ContactMessage
+        public async Task<List<ContactMessage>> GetContactMessagesAsync() =>
+            await _contactMessageCollection.Find(_ => true).ToListAsync();
+
+        public async Task<ContactMessage?> GetContactMessageAsync(string id) =>
+            await _contactMessageCollection.Find(x => x.Id == id).FirstOrDefaultAsync();
+
+        public async Task CreateContactMessageAsync(ContactMessage newContactMessage) =>
+            await _contactMessageCollection.InsertOneAsync(newContactMessage);
+
+        public async Task UpdateContactMessageAsync(string id, ContactMessage updatedContactMessage) =>
+            await _contactMessageCollection.ReplaceOneAsync(x => x.Id == id, updatedContactMessage);
+
+        public async Task RemoveContactMessageAsync(string id) =>
+            await _contactMessageCollection.DeleteOneAsync(x => x.Id == id);
+
+        public async Task<List<ContactMessage>> GetContactMessagesByEmailAsync(string email) =>
+            await _contactMessageCollection.Find(x => x.Email == email).ToListAsync();
+        #endregion
 
         #region Email
         public async Task<List<Email>> GetEmailsAsync() =>

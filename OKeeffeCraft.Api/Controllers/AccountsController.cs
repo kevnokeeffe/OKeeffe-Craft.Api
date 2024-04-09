@@ -5,7 +5,6 @@ using OKeeffeCraft.Entities;
 using OKeeffeCraft.Models;
 using OKeeffeCraft.Models.Accounts;
 using Swashbuckle.AspNetCore.Annotations;
-using System.Text;
 
 namespace OKeeffeCraft.Api.Controllers
 {
