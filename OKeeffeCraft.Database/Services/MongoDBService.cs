@@ -13,6 +13,8 @@ namespace OKeeffeCraft.Core.Services
         private readonly IMongoCollection<RefreshToken> _refreshTokenCollection;
         private readonly IMongoCollection<Email> _emailCollection;
         private readonly IMongoCollection<ContactMessage> _contactMessageCollection;
+        private readonly IMongoCollection<Games> _gamesCollection;
+        private readonly IMongoCollection<SnakeHighScore> _snakeHighScore;
 
         private readonly MongoDataContext _context;
 
@@ -25,7 +27,38 @@ namespace OKeeffeCraft.Core.Services
             _refreshTokenCollection = _context.db.GetCollection<RefreshToken>("RefreshTokens");
             _emailCollection = _context.db.GetCollection<Email>("Email");
             _contactMessageCollection = _context.db.GetCollection<ContactMessage>("ContactMessages");
+            _gamesCollection = _context.db.GetCollection<Games>("Games");
+            _snakeHighScore = _context.db.GetCollection<SnakeHighScore>("SnakeHighScore");
         }
+
+        #region SnakeHighScore
+        public async Task<List<SnakeHighScore>> GetSnakeHighScoresAsync() =>
+            await _snakeHighScore.Find(_ => true).ToListAsync();
+
+        public async Task<SnakeHighScore> GetSnakeHighScoreAsync(string id) =>
+            await _snakeHighScore.Find(x => x.Id == id).FirstOrDefaultAsync();
+
+        public async Task CreateSnakeHighScoreAsync(SnakeHighScore newSnakeHighScore) =>
+            await _snakeHighScore.InsertOneAsync(newSnakeHighScore);
+
+        public async Task UpdateSnakeHighScoreAsync(string id, SnakeHighScore updatedSnakeHighScore) =>
+            await _snakeHighScore.ReplaceOneAsync(x => x.Id == id, updatedSnakeHighScore);
+        
+        public async Task RemoveSnakeHighScoreAsync(string id) =>
+            await _snakeHighScore.DeleteOneAsync(x => x.Id == id);
+        #endregion
+
+        #region Games
+        public async Task<List<Games>> GetGamesAsync() =>
+            await _gamesCollection.Find(_ => true).ToListAsync();
+
+        public async Task<Games?> GetGamesAsync(string id) =>
+            await _gamesCollection.Find(x => x.Id == id).FirstOrDefaultAsync();
+
+        public async Task CreateGamesAsync(Games newGames) =>
+            await _gamesCollection.InsertOneAsync(newGames);
+
+        #endregion
 
         #region ContactMessage
         public async Task<List<ContactMessage>> GetContactMessagesAsync() =>

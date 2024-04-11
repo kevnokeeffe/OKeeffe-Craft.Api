@@ -57,12 +57,10 @@ namespace OKeeffeCraft.Database
             {
                 database.CreateCollection("Accounts");
             }
-
             if (!collectionNamesList.Contains("Email"))
             {
                 database.CreateCollection("Email");
             }
-
             if (!collectionNamesList.Contains("ActivityLogs"))
             {
                 database.CreateCollection("ActivityLogs");
@@ -71,15 +69,18 @@ namespace OKeeffeCraft.Database
             {
                 database.CreateCollection("ErrorLogs");
             }
-            if (!collectionNamesList.Contains("RefreshTokens"))
-            {
-                database.CreateCollection("RefreshTokens");
-            }
             if (!collectionNamesList.Contains("ContactMessages"))
             {
                 database.CreateCollection("ContactMessages");
             }
-
+            if (!collectionNamesList.Contains("Games"))
+            {
+                database.CreateCollection("Games");
+            }
+            if (!collectionNamesList.Contains("SnakeHighScore"))
+            {
+                database.CreateCollection("SnakeHighScore");
+            }
             // Add more checks and collection creations as needed
         }
     }

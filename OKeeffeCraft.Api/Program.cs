@@ -26,7 +26,7 @@ services.AddCors(options =>
     options.AddPolicy(name: MyAllowSpecificOrigins,
                       policy =>
                       {
-                          policy.WithOrigins("https://kevokeeffe.ie", "http://localhost:4200", "https://www.kevokeeffe.ie", "https://postmarkapp.com", "https://api.postmarkapp.com")
+                          policy.WithOrigins("https://kevokeeffe.ie", "https://www.kevokeeffe.ie", "http://localhost:4200", "https://postmarkapp.com", "https://api.postmarkapp.com")
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials();
@@ -57,6 +57,7 @@ services.AddScoped<IContactMessageService, ContactMessageService>();
 services.AddScoped<IAMLAssistantService, AMLAssistantService>();
 services.AddScoped<IMongoDBService, MongoDBService>();
 services.AddScoped<IPostmarkEmailServiceProvider, PostmarkEmailServiceProvider>();
+services.AddScoped<IGamesService, GamesService>();
 
 // configure DI for external services transients
 services.AddTransient<IAuthIdentityService, AuthIdentityService>();

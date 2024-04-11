@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using OKeeffeCraft.Entities;
+using OKeeffeCraft.Models;
 using OKeeffeCraft.Models.Accounts;
 using OKeeffeCraft.Models.Email;
 using OKeeffeCraft.Models.Logs;
@@ -30,6 +31,16 @@ namespace OKeeffeCraft.Helpers
             CreateMap<AccountModel, Account>();
 
             CreateMap<EmailModel, Email>();
+
+            CreateMap<SnakeHighScore, SnakeHighScoreModel>();
+
+            CreateMap<SnakeHighScoreModel, SnakeHighScore>();
+
+            CreateMap<CreateSnakeHighScoreModel, SnakeHighScore>();
+
+            CreateMap<UpdateSnakeHighScoreModel, SnakeHighScore>();
+
+
 
             CreateMap<RegisterRequest, Account>();
 

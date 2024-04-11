@@ -4,6 +4,14 @@ namespace OKeeffeCraft.Core.Interfaces
 {
     public interface IMongoDBService
     {
+        Task<List<Games>> GetGamesAsync();
+        Task<Games?> GetGamesAsync(string id);
+        Task CreateGamesAsync(Games newGames);
+        Task<List<SnakeHighScore>> GetSnakeHighScoresAsync();
+        Task<SnakeHighScore> GetSnakeHighScoreAsync(string id);
+        Task CreateSnakeHighScoreAsync(SnakeHighScore newSnakeHighScore);
+        Task UpdateSnakeHighScoreAsync(string id, SnakeHighScore updatedSnakeHighScore);
+        Task RemoveSnakeHighScoreAsync(string id);
         Task<List<ContactMessage>> GetContactMessagesAsync();
         Task<ContactMessage?> GetContactMessageAsync(string id);
         Task CreateContactMessageAsync(ContactMessage newContactMessage);
@@ -18,7 +26,6 @@ namespace OKeeffeCraft.Core.Interfaces
         Task<List<Email>> GetEmailsByExternalRefAsync(string externalRef);
         Task<Email> GetEmailByExternalRefAsync(string externalRef);
         Task<List<Email>> GetEmailsByStatusAsync(string status);
-
         Task<List<Account>> GetAccountsAsync();
         Task<Account> GetAccountByRefreshTokenAsync(string refreshToken);
         Task<Account> GetAccountByResetTokenAsync(string resetToken);
@@ -31,7 +38,6 @@ namespace OKeeffeCraft.Core.Interfaces
         Task<List<ActivityLog>> GetActivityLogsAsync();
         Task<ActivityLog?> GetActivityLogAsync(string id);
         Task CreateActivityLogAsync(ActivityLog newActivityLog);
-
         Task<List<ErrorLog>> GetErrorLogsAsync();
         Task<ErrorLog?> GetErrorLogAsync(string id);
         Task CreateErrorLogAsync(ErrorLog newErrorLog);
