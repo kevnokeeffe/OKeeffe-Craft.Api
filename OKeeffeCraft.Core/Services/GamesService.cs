@@ -81,7 +81,8 @@ namespace OKeeffeCraft.Core.Services
                 {
                     return new ServiceResponse<string> { Data = null, Message = "Invalid score", Success = false };
                 }
-                var updatedSnakeHighScore = _mapper.Map<SnakeHighScore>(model);
+                var highScore = await _context.GetSnakeHighScoreAsync(id);
+                var updatedSnakeHighScore = _mapper.Map(model, highScore);
                 updatedSnakeHighScore.UpdatedDate = DateTime.UtcNow;
                 await _context.UpdateSnakeHighScoreAsync(id, updatedSnakeHighScore);
                 return new ServiceResponse<string> { Data = null, Message = "Score updated", Success = true };
