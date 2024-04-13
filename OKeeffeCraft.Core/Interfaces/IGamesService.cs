@@ -7,6 +7,6 @@ namespace OKeeffeCraft.Core.Interfaces
         Task<ServiceResponse<string>> CreateSnakeHighScore(CreateSnakeHighScoreModel snakeHighScore);
         Task<ServiceResponse<IEnumerable<SnakeHighScoreModel>>> GetSnakeHighScores();
         Task<ServiceResponse<SnakeHighScoreModel>> GetSnakeHighScoreById(string id);
-        Task<ServiceResponse<string>> UpdateSnakeHighScore(string id, UpdateSnakeHighScoreModel updatedSnakeHighScore);
+        Task<ServiceResponse<SnakeHighScoreModel>> UpdateSnakeHighScore(string id, UpdateSnakeHighScoreModel updatedSnakeHighScore);
     }
 }

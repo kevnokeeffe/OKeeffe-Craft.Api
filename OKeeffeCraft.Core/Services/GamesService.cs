@@ -73,24 +73,24 @@ namespace OKeeffeCraft.Core.Services
 
         }
 
-        public async Task<ServiceResponse<string>> UpdateSnakeHighScore(string id, UpdateSnakeHighScoreModel model)
+        public async Task<ServiceResponse<SnakeHighScoreModel>> UpdateSnakeHighScore(string id, UpdateSnakeHighScoreModel model)
         {
             try
             {
                 if (model == null)
                 {
-                    return new ServiceResponse<string> { Data = null, Message = "Invalid score", Success = false };
+                    return new ServiceResponse<SnakeHighScoreModel> { Data = null, Message = "Invalid score", Success = false };
                 }
                 var highScore = await _context.GetSnakeHighScoreAsync(id);
                 var updatedSnakeHighScore = _mapper.Map(model, highScore);
                 updatedSnakeHighScore.UpdatedDate = DateTime.UtcNow;
                 await _context.UpdateSnakeHighScoreAsync(id, updatedSnakeHighScore);
-                return new ServiceResponse<string> { Data = null, Message = "Score updated", Success = true };
+                return new ServiceResponse<SnakeHighScoreModel> { Data = _mapper.Map< SnakeHighScoreModel>( updatedSnakeHighScore), Message = "Score updated", Success = true };
             }
             catch (Exception ex)
             {
                 await _logService.ErrorLog(ex.Message, ex.StackTrace, null, null);
-                return new ServiceResponse<string> { Data = null, Message = "Error updating score", Success = false };
+                return new ServiceResponse<SnakeHighScoreModel> { Data = null, Message = "Error updating score", Success = false };
             }
         }
     }
