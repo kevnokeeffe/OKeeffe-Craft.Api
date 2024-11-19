@@ -58,7 +58,7 @@ namespace OKeeffeCraft.Core.Services
             var subject = "Confirm your email address for KevOKeeffe.ie";
 
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine("Thanks for registering with KevOKeeffe.ie. Please click on the following link to confirm your email address:");
+            sb.AppendLine("Thanks for registering with kevokeeffe.ie. Please click on the following link to confirm your email address:");
             sb.AppendLine();
             sb.AppendLine($"{_appSettings.ClientUrl}/verify-email?token={model.AccessToken}");
             sb.AppendLine();
@@ -80,7 +80,7 @@ namespace OKeeffeCraft.Core.Services
 
         public async Task SendPasswordResetEmail(Account account)
         {
-            var subject = "Reset your password for KevOKeeffe.ie";
+            var subject = "Reset your password for kevokeeffe.ie";
 
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("Please click the below link to reset your password, the link will be valid for 1 day:");
