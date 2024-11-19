@@ -171,39 +171,39 @@ namespace OKeeffeCraft.ExternalServiceProviders.Services
             }
         }
 
-        public async Task<ServiceResponse<object>> CreateAndSendMessage(AssistantMessageRequest model)
-        {
-            if (model.ThreadId.IsNullOrEmpty() || model.ThreadId == null || model.Message.IsNullOrEmpty() || model.Message == null)
-            {
-                return new ServiceResponse<object>
-                {
-                    Data = null,
-                    Message = "Thread Id & message are required",
-                    Success = false
-                };
-            }
-            try
-            {
-                var response = await CreateMessageAsync(model.ThreadId, model.Message);
-                await _logService.ActivityLog("Message sent successfully", "Open AI", "CreateMessageAsync");
-                return new ServiceResponse<object>
-                {
-                    Data = response,
-                    Message = "Message sent successfully",
-                    Success = true
-                };
-            }
-            catch (Exception ex)
-            {
-                await _logService.ErrorLog(ex.Message, ex.StackTrace, "Open AI", "CreateMessageAsync");
-                return new ServiceResponse<object>
-                {
-                    Data = null,
-                    Message = "Error sending message",
-                    Success = false
-                };
-            }
-        }
+        //public async Task<ServiceResponse<object>> CreateAndSendMessage(AssistantMessageRequest model)
+        //{
+        //    if (model.ThreadId.IsNullOrEmpty() || model.ThreadId == null || model.Message.IsNullOrEmpty() || model.Message == null)
+        //    {
+        //        return new ServiceResponse<object>
+        //        {
+        //            Data = null,
+        //            Message = "Thread Id & message are required",
+        //            Success = false
+        //        };
+        //    }
+        //    try
+        //    {
+        //        var response = await CreateMessageAsync(model.ThreadId, model.Message);
+        //        await _logService.ActivityLog("Message sent successfully", "Open AI", "CreateMessageAsync");
+        //        return new ServiceResponse<object>
+        //        {
+        //            Data = response,
+        //            Message = "Message sent successfully",
+        //            Success = true
+        //        };
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        await _logService.ErrorLog(ex.Message, ex.StackTrace, "Open AI", "CreateMessageAsync");
+        //        return new ServiceResponse<object>
+        //        {
+        //            Data = null,
+        //            Message = "Error sending message",
+        //            Success = false
+        //        };
+        //    }
+        //}
 
         public async Task<ServiceResponse<object>> RetriveMessage(string threadId, string messageId)
         {
@@ -273,42 +273,42 @@ namespace OKeeffeCraft.ExternalServiceProviders.Services
             }
         }
 
-        public async Task<ServiceResponse<object>> CreateRun(string message)
-        {
-            if (message.IsNullOrEmpty() || message == null)
-            {
-                return new ServiceResponse<object>
-                {
-                    Data = null,
-                    Message = "Message is required",
-                    Success = false
-                };
-            }
-            try
-            {
-                var assistant = await RetriveAssistantAsync();
-                var thread = await CreateThreadAsync();
-                await CreateMessageAsync(thread, message);
-                var run = await CreateRunAsync(thread, assistant);
-                await _logService.ActivityLog("Run created successfully", "Open AI", "CreateRunAsync");
-                return new ServiceResponse<object>
-                {
-                    Data = run,
-                    Message = "Run created successfully",
-                    Success = true
-                };
-            }
-            catch (Exception ex)
-            {
-                await _logService.ErrorLog(ex.Message, ex.StackTrace, "Open AI", "CreateRunAsync");
-                return new ServiceResponse<object>
-                {
-                    Data = null,
-                    Message = "Error creating run",
-                    Success = false
-                };
-            }
-        }
+        //public async Task<ServiceResponse<object>> CreateRun(string message)
+        //{
+        //    if (message.IsNullOrEmpty() || message == null)
+        //    {
+        //        return new ServiceResponse<object>
+        //        {
+        //            Data = null,
+        //            Message = "Message is required",
+        //            Success = false
+        //        };
+        //    }
+        //    try
+        //    {
+        //        var assistant = await RetriveAssistantAsync();
+        //        var thread = await CreateThreadAsync();
+        //        await CreateMessageAsync(thread, message);
+        //        var run = await CreateRunAsync(thread, assistant);
+        //        await _logService.ActivityLog("Run created successfully", "Open AI", "CreateRunAsync");
+        //        return new ServiceResponse<object>
+        //        {
+        //            Data = run,
+        //            Message = "Run created successfully",
+        //            Success = true
+        //        };
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        await _logService.ErrorLog(ex.Message, ex.StackTrace, "Open AI", "CreateRunAsync");
+        //        return new ServiceResponse<object>
+        //        {
+        //            Data = null,
+        //            Message = "Error creating run",
+        //            Success = false
+        //        };
+        //    }
+        //}
 
         public async Task<ServiceResponse<object>> RetrieveRun(string threadId, string runId)
         {
@@ -365,77 +365,77 @@ namespace OKeeffeCraft.ExternalServiceProviders.Services
             }
         }
 
-        public async Task<ServiceResponse<ListResponse<MessageResponse>>> CreateRunAndGetResult(CreateRunModel model)
-        {
-            if (model == null || model.Message.IsNullOrEmpty() || model.Message == null)
-            {
-                return new ServiceResponse<ListResponse<MessageResponse>>
-                {
-                    Data = null,
-                    Message = "Message is required",
-                    Success = false
-                };
-            }
-            try
-            {
-                var timeout = TimeSpan.FromSeconds(30); // Set your desired timeout duration here
-                var stopwatch = Stopwatch.StartNew();
-                var assistant = await RetriveAssistantAsync();
+        //public async Task<ServiceResponse<ListResponse<MessageResponse>>> CreateRunAndGetResult(CreateRunModel model)
+        //{
+        //    if (model == null || model.Message.IsNullOrEmpty() || model.Message == null)
+        //    {
+        //        return new ServiceResponse<ListResponse<MessageResponse>>
+        //        {
+        //            Data = null,
+        //            Message = "Message is required",
+        //            Success = false
+        //        };
+        //    }
+        //    try
+        //    {
+        //        var timeout = TimeSpan.FromSeconds(30); // Set your desired timeout duration here
+        //        var stopwatch = Stopwatch.StartNew();
+        //        var assistant = await RetriveAssistantAsync();
 
-                ThreadResponse? thread;
-                if (!model.ThreadId.IsNullOrEmpty() && model.ThreadId != null && model.ThreadId != "null") thread = await RetrieveThreadAsync(model.ThreadId);
-                else thread = await CreateThreadAsync();
+        //        ThreadResponse? thread;
+        //        if (!model.ThreadId.IsNullOrEmpty() && model.ThreadId != null && model.ThreadId != "null") thread = await RetrieveThreadAsync(model.ThreadId);
+        //        else thread = await CreateThreadAsync();
 
-                await CreateMessageAsync(thread, model.Message);
-                var run = await CreateRunAsync(thread, assistant);
-                while (run.Status != RunStatus.Completed)
-                {
-                    if (stopwatch.Elapsed >= timeout)
-                    {
-                        await _logService.ErrorLog("Run not completed, response timeout", null, "Open AI", "CreateRunAndGetResult");
-                        return new ServiceResponse<ListResponse<MessageResponse>>
-                        {
-                            Data = null,
-                            Message = "Run not completed, response timeout",
-                            Success = false
-                        };
-                    }
-                    await Task.Delay(TimeSpan.FromSeconds(2));
-                    run = await RetriveRunAsync(thread.Id, run.Id);
-                }
-                if (run.Status == RunStatus.Completed)
-                {
-                    await _logService.ActivityLog("Run completed successfully", "Open AI", "CreateRunAndGetResult");
-                    var messages = await run.ListMessagesAsync();
-                    return new ServiceResponse<ListResponse<MessageResponse>>
-                    {
-                        Data = messages,
-                        Message = "Run completed successfully",
-                        Success = false
-                    };
-                }
-                else
-                {
-                    await _logService.ErrorLog("Run not completed, response timeout", null, "Open AI", "CreateRunAndGetResult");
-                    return new ServiceResponse<ListResponse<MessageResponse>>
-                    {
-                        Data = null,
-                        Message = "Run not completed, response timeout",
-                        Success = false
-                    };
-                }
-            }
-            catch (Exception ex)
-            {
-                await _logService.ErrorLog(ex.Message, ex.StackTrace, "Open AI", "CreateRunAndGetResult");
-                return new ServiceResponse<ListResponse<MessageResponse>>
-                {
-                    Data = null,
-                    Message = "Error creating run",
-                    Success = false
-                };
-            }
-        }
+        //        await CreateMessageAsync(thread, model.Message);
+        //        var run = await CreateRunAsync(thread, assistant);
+        //        while (run.Status != RunStatus.Completed)
+        //        {
+        //            if (stopwatch.Elapsed >= timeout)
+        //            {
+        //                await _logService.ErrorLog("Run not completed, response timeout", null, "Open AI", "CreateRunAndGetResult");
+        //                return new ServiceResponse<ListResponse<MessageResponse>>
+        //                {
+        //                    Data = null,
+        //                    Message = "Run not completed, response timeout",
+        //                    Success = false
+        //                };
+        //            }
+        //            await Task.Delay(TimeSpan.FromSeconds(2));
+        //            run = await RetriveRunAsync(thread.Id, run.Id);
+        //        }
+        //        if (run.Status == RunStatus.Completed)
+        //        {
+        //            await _logService.ActivityLog("Run completed successfully", "Open AI", "CreateRunAndGetResult");
+        //            var messages = await run.ListMessagesAsync();
+        //            return new ServiceResponse<ListResponse<MessageResponse>>
+        //            {
+        //                Data = messages,
+        //                Message = "Run completed successfully",
+        //                Success = false
+        //            };
+        //        }
+        //        else
+        //        {
+        //            await _logService.ErrorLog("Run not completed, response timeout", null, "Open AI", "CreateRunAndGetResult");
+        //            return new ServiceResponse<ListResponse<MessageResponse>>
+        //            {
+        //                Data = null,
+        //                Message = "Run not completed, response timeout",
+        //                Success = false
+        //            };
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        await _logService.ErrorLog(ex.Message, ex.StackTrace, "Open AI", "CreateRunAndGetResult");
+        //        return new ServiceResponse<ListResponse<MessageResponse>>
+        //        {
+        //            Data = null,
+        //            Message = "Error creating run",
+        //            Success = false
+        //        };
+        //    }
+        //}
 
         public async Task<ServiceResponse<object>> GetThreadMessages(string threadId)
         {
@@ -496,14 +496,16 @@ namespace OKeeffeCraft.ExternalServiceProviders.Services
             return assistant;
         }
 
-        private async Task<MessageResponse> CreateMessageAsync(string threadId, string message)
-        {
-            var request = new CreateMessageRequest(
-                               content: message
-                                          );
-            var result = await _api.ThreadsEndpoint.CreateMessageAsync(threadId, request);
-            return result;
-        }
+        // ...
+
+        //private async Task<MessageResponse> CreateMessageAsync(string threadId, string message)
+        //{
+        //    var request = new CreateMessageRequest(
+        //                       content: message
+        //                                  );
+        //    var result = await _api.ThreadsEndpoint.CreateMessageAsync(threadId, request);
+        //    return result;
+        //}
 
         private async Task<ThreadResponse> RetrieveThreadAsync(string threadId)
         {
