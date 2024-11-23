@@ -20,11 +20,11 @@ To get started with O'Keeffe Craft API, follow these steps:
 5. Configure your database connection string in the `appsettings.json` file.
 6. Run `dotnet ef database update` to apply migrations and create the database schema.
 7. Once everything is set up, run `dotnet run` to start the API server.
-8. The API will be accessible at the specified endpoint (e.g., `https://localhost:5001`).
+8. The API will be accessible at the specified endpoint (e.g., `https://localhost:4000`).
 
 ## Usage
 
-O'Keeffe Craft API provides endpoints for managing crafting projects, tasks, users, and more. You can interact with the API using tools like Postman or integrate it directly into your frontend application.
+O'Keeffe Craft API provides endpoints for managing accounts and your activities. You can interact with the API using tools like Postman or integrate it directly into your frontend application.
 
 ## Documentation
 
