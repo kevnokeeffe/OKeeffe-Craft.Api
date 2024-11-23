@@ -24,7 +24,7 @@ To get started with O'Keeffe Craft API, follow these steps:
 
 ## Usage
 
-O'Keeffe Craft API provides endpoints for managing accounts and your activities. You can interact with the API using tools like Postman or integrate it directly into your frontend application.
+O'Keeffe Craft API provides endpoints for managing your accounts and activities. You can interact with the API using tools like Postman or integrate it directly into your frontend application.
 
 ## Documentation
 
